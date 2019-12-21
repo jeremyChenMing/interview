@@ -52,7 +52,7 @@ promise有.then的方法，返回也是一个promise对象，可以进行链式�
 ```
 this总是指向调用某个方法的对象，但是使用call，apply可以改变this的指向问题；  
 .call(thisObjet, arg1, arg2, arg3...)  
-例子：A.call(B, x,y);其实就是把A函数放到B中执行，参数为x,y；  
+例子：A.call(B, x,y);其实就是把A函数放到B中执行，参数为x,y；  apply和call一样，只是传参的方式不一样，后者用[x,y]  
 function myfunc1(){
     this.name = 'Lee';
     this.myTxt = function(txt) {
@@ -66,6 +66,39 @@ function myfunc2(){
  
 var myfunc3 = new myfunc2();
 myfunc3.myTxt('Geing'); // i am Geing
-console.log (myfunc3.name);	// Lee
+console.log (myfunc3.name);	// Lee  
+
+区别：前二者是立即执行，bind返回的是函数，所以需要手动触发A.bind(B)();  
+```
+a）手写call,apply 
+```
+Function.prototype.myCall = function (context) {
+    var context = context || window;
+    context.fn = this;
+    var arg = [...arguments].slice(1);
+    var result = context.fn(...arg);
+    delete context.fn;
+    return result
+}
+Function.prototype.myApply = function (context) {
+    var context = context || window;
+    context.fn = this;
+    var result;
+    if(arguments[1]) {
+        result = context.fn(...arguments[1]);  
+    }else{
+        result = context.fn()
+    }
+    delete context.fn;
+    return result
+}
 ```
 <br />
+
+### 对webpack的理解
+```
+它是一个模块加载兼打包的一个工具，他能把各种资源当作模块来加载；  
+两大特色是code spliting和tree shaking  
+前者：代码分割，按需加载chunks，后者：通过对比把没有用的代码通过插件的方式清除掉  
+
+```
