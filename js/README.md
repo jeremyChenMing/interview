@@ -1,5 +1,10 @@
-# js相关问答
-### 1、什么是原型对象，原型链？  
+js相关问答
+===
+### 什么是原型对象，原型链？ 
+创建脚注格式类似这样 [^RUNOOB]。
+
+[^RUNOOB]: 菜鸟教程 -- 学的不仅是技术，更是梦想！！！  
+
 ```
 1）用new关键字来调用的函数成为构造函数，函数名首字母一般大写  
 2）每一个构造函数在被创建出的时候系统会自动给这个构造函数创建并关联一个对象，这个对象就叫做原型对象，通过prototype来访问  
@@ -12,19 +17,19 @@
 ```
 <br />
 
-### 2、什么是闭包，作用域链？
+### 什么是闭包，作用域链？
 ```
 闭包是指有权访问另一个函数作用域中的变量的函数,创建闭包的最常见的方式就是在一个函数内创建另一个函数,通过另一个函数访问这个函数的局部变量  
 
 组成部分包含两部分：1）上下文环境A，2）在A中创建函数B 。我们调用B的时候能够访问到A中的变量，这就形成了闭包  
-缺点：变量常驻内容，过多使用容易早上内存溢出（解决办法：手动将函数A置为空对象null） 
-优点：缓存变量，是变量局部化  
+缺点：变量常驻内存，过多使用容易造成内存溢出（解决办法：手动将函数A置为空对象null） 
+优点：缓存变量，使变量局部化  
 作用域：就是函数和变量的可访问范围，分为全局作用域、局部作用域、块级作用域  
 作用域链：其实就是在作用域中向上的访问形成的一种链式结构
 ```
 <br />
 
-### 3、react原理，vue原理，小程序原理？
+### react原理，vue原理，小程序原理？
 ```
 vue数据双向绑定的原理：采用数据劫持和发布/订阅者模式的方式，通过Object.defineProperty()来劫持各个属性的setter，getter，在数据变动时发布消息给订阅者，触发相应的监听回调用； 
 ```
@@ -48,6 +53,15 @@ promise有.then的方法，返回也是一个promise对象，可以进行链式�
 ```
 <br />
 
+### async/await、 */generator
+```
+async/await：es7方法，用同步的思维解决异步问题，相比与promise的优势在于处理.then的链式调用，能是代码更加的清晰，缺点是可能会导致性能问题，因为await会阻塞代码。 返回的是一个promise。   
+
+*/generator函数：es6方法，也是用来解决异步编程的问题，通过*标记这是一个generator函数，内部通过yield来暂停代码，通过.next()来恢复执行，执行.next()返回的是一个对象{value: 值， down: 是否结束}  
+
+async相比generator相比多了内部的执行器，其次是await的后面可以跟promise及其他原始类型的数据，yield后面只能跟thunk函数和promise  
+```
+
 ### apply,call,bind的理解
 ```
 this总是指向调用某个方法的对象，但是使用call，apply可以改变this的指向问题；  
@@ -59,11 +73,9 @@ function myfunc1(){
         console.log( 'i am',txt );
     }
 }
- 
 function myfunc2(){
     myfunc1.call(this);
 }
- 
 var myfunc3 = new myfunc2();
 myfunc3.myTxt('Geing'); // i am Geing
 console.log (myfunc3.name);	// Lee  
@@ -72,25 +84,43 @@ console.log (myfunc3.name);	// Lee
 ```
 a）手写call,apply 
 ```
-Function.prototype.myCall = function (context) {
-    var context = context || window;
-    context.fn = this;
-    var arg = [...arguments].slice(1);
-    var result = context.fn(...arg);
-    delete context.fn;
-    return result
+Function.prototype.myCall = function (ctx) {
+    // console.log(ctx); // 指向data
+    // console.log(this); // 指向say函数
+    // console.log(arguments); // 参数（第一个是ctx，后面的可以多传一些）
+    var ctx = ctx || window;
+    ctx.fn = this;
+    var arg = [...arguments].slice(1); // 获取后面的参数
+    var result = ctx.fn(...arg); // 没有返回值
+    delete ctx.fn;
+    return result;
 }
 Function.prototype.myApply = function (context) {
     var context = context || window;
     context.fn = this;
     var result;
-    if(arguments[1]) {
+    if(arguments[1]) { // 表示apply后面的那个数组参数
         result = context.fn(...arguments[1]);  
     }else{
         result = context.fn()
     }
     delete context.fn;
     return result
+}  
+Function.prototype.myBind = function (context) {
+  if (typeof this !== 'function') {
+    throw new TypeError('Error')
+  }
+  const _this = this
+  const args = [...arguments].slice(1)
+  // 返回一个函数
+  return function F() {
+    // 因为返回了一个函数，我们可以 new F()，所以需要判断
+    if (this instanceof F) {
+      return new _this(...args, ...arguments)
+    }
+    return _this.apply(context, args.concat(...arguments))
+  }
 }
 ```
 <br />
