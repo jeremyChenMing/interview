@@ -36,7 +36,7 @@ react采用单项数据流动， 作为一个mvc中的V（视图层），内部�
 
 
 ### JSX是如何解析的
-1. JSX是react的语法糖，它将Dom看成是一个对象（标签名，属性，子元素）。通过ReactDom.render将dom树插入到页面的某个特定元素上（#root）.
+1. JSX是react的语法糖，它将Dom看成是一个对象（标签名，属性，子元素）。通过ReactDom.render将dom树插入到页面的某个特定元素上（#root）  
 ![jsx](img/jsx.png)  
 > jsx是javascript语言的一种语法扩展
 > jsx是描述你的组件长什么样子，在编译时会编程相应的js对象描述
