@@ -134,3 +134,12 @@ Function.prototype.myBind = function (context) {
 前者：代码分割，按需加载chunks，后者：通过对比把没有用的代码通过插件的方式清除掉  
 
 ```
+
+### Common JS、AMD、CMD、UMD的区别
+- Common js是服务端模块的规范，NodeJS采用了这个规范，规范规定一个单独的文件就是一个模块，加载模块需要使用require方法，返回内部exports对象。
+    + 其次CommonJS加载模块是同步了，只有加载完成才能执行后面的操作，但是浏览器环境要从服务器上加载模块，必须采用异步模式，所以就有了AMD CMD  
+- AMD，使用时需要针对js采用对应的函数库也就是requireJS，主要解决的问题包括：
+    + 多个js文件可能有依赖的关系，被依赖的文件需要早于依赖它的文件加载到浏览器中  
+    + js加载的时候浏览器会停止页面渲染，加载文件越多，页面失去响应时间越长  
+- CMD，同AMD一样，需要seaJS来运行，同AMD的区别是CMD推崇就近依赖，只在用到某个模块的时候在区require，而AMD推崇依赖前置，在定义模块的时候就要声明其依赖的模块  
+- UMD，是AMD和CommonJS的组合
