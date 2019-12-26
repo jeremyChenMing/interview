@@ -19,6 +19,12 @@ React
 ### React原理
 react采用单项数据流动， 作为一个mvc中的V（视图层），内部通过虚拟Dom进行diff运算，在更新需要更新的试图，相比较传统前端操作dom性能和体验要好很多。
 
+### 受控组件与非受控组件
+1. 受控组件：每当表单的状态发生变化，都会被写入到组件的state中，这种组件就被称为受控组件。
+> 默认值存储在state中，每当表单值发生变化，调用onChange事件处理，使用setState触发渲染
+2. 非受控组件：一个表单组件没有value props就可以称为非受控组件，通常需要添加ref prop来访问渲染后的底层DOM元素
+3. 区别：非受控组件状态并不会受到应用状态的控制，应用中也多了局部的组件状态，而受控组件的值来源与state
+
 ### 虚拟DOM，为什么能提高性能  
 - 虚拟dom是react使用js实现了一套dom结构
 - 首先操作真是DOM的耗费的性能代价太大，而js操作对象会很快，而虚拟dom是js和真是dom中间加了一个缓存，通过diff算法，找出变化的dom节点，然后在更新真实的dom，从而提高性能  
@@ -58,6 +64,11 @@ react采用单项数据流动， 作为一个mvc中的V（视图层），内部�
 ### react的事件机制
 > react自己实现了一套事件机制，将浏览器的原生事件封装为合成事件```SyntheticEvent```，与原生事件相同的接口，不过他们屏蔽了底层浏览器的细节差异，抹平了浏览器之间的兼容问题。这些事情其实并没有附着到元素上，而是通过事件代理的方式，将所有事件统一绑定到了顶层（document），这样在更新dom的时候就不用考虑如何去处理附着在dom上的事件监听了，减少了内存的消耗，最终达到优化的目的。  
 > 另外冒泡到document上的事件也不是原生浏览器事件，而是react的合成事件，因此要阻止冒泡的话需要采用```event.preventDefault```
+
+### react事件注册和分发 !!!
+> 根据react事件机制，事件并没有绑定在元素上，而是通过事件代理的方式，绑定到了document上，这样再次更新的时候相应的事件将不在注册
+> 事件分发主要是通过dispatchEvent进行，从事件触发组件开始，向父元素遍历  
+![event](img/event.png)  
 
 
 
@@ -129,14 +140,6 @@ componentWillUnmount
 > 常见的HOC有redux中的connect()(wrapperComponent), antd中Form.create()等
 
 
-
-### 性能的优化
-- shouldComponentUpdate, 针对这个周期进行重写，返回布尔值从而进行是否继续更新  
-- 针对复杂数据的结构，可以在上述周期中使用immutable库来产生不可变对象，一旦数据变动就会生成新的对象，这样前后对比就会很方便，从而提高性能  
-- 如果只是浅比较，可以使用pureComponent，或者hook函数中的react.mome()  
-- 使用production版本的react.js  
-- 使用key来帮助react识别列表中自组件的最小变化，不建议使用index，因为每次index会变
-
 ### React的生命周期mount(挂载)和update(更新)描述下
 
 ![16版本后的生命周期图](img/life.jpg)
@@ -155,11 +158,20 @@ setState的更新流程如下图：
 5. transaction对象暴露了一个perform的方法，用来执行anyMethod，在anyMethod执行的前，需要先执行所有wrapper的initialize方法，在执行完后，要执行所有wrapper的close方法。
 
 
+### ssr(sever slide rendering)  
+1. 即服务端渲染，可以优化首屏的加载速度，优化搜索引擎爬虫爬取页面  
+2. 借助react的属性renderToString || renderToStaticMarkup这个API来实现，流程如下图  
+![ssr](img/ssr.png)  
+> 区别在于前者渲染的时候带有data-reactid，而后者没有
 
 
 
-
-
+### 性能的优化
+- shouldComponentUpdate, 针对这个周期进行重写，返回布尔值从而进行是否继续更新  
+- 针对复杂数据的结构，可以在上述周期中使用immutable库来产生不可变对象，一旦数据变动就会生成新的对象，这样前后对比就会很方便，从而提高性能  
+- 如果只是浅比较，可以使用pureComponent，或者hook函数中的react.mome()  
+- 使用production版本的react.js  
+- 使用key来帮助react识别列表中自组件的最小变化，不建议使用index，因为每次index会变
 
 
 
