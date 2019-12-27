@@ -5,7 +5,8 @@ js相关问答
 * 构造函数
     - 用new关键字来调用的函数成为构造函数，函数名首字母一般大写  
 * 原型对象
-    - 每一个构造函数在被创建出的时候系统会自动给这个构造函数创建并关联一个对象，这个对象就叫做原型对象，通过prototype来访问
+    - 每一个构造函数在被创建出的时候系统会自动给这个构造函数创建并关联一个对象，这个对象就叫做原型对象，通过prototype来访问  
+    - 作用：实现继承  
 
 ```javascript
 function Child(name, age) {
@@ -38,31 +39,31 @@ Object.prototype.__proto__ // null 顶层
 <br />
 
 ### 事件循环(event loop)
-```
-它是js执行事件顺序，分为三个部分：执行栈、webAPI、队列（callback queue）；首先执行所有的同步任务，当遇到异步任务时，调用webAPI，将任务放在队列里，当执行栈中的任务为空的时候，事件循环机制就会按照顺序从队列里取出任务放在执行栈中执行。  
+
+> 它是js执行事件顺序，分为三个部分：执行栈、webAPI、队列（callback queue）；首先执行所有的同步任务，当遇到异步任务时，调用webAPI，将任务放在队列里，当执行栈中的任务为空的时候，事件循环机制就会按照顺序从队列里取出任务放在执行栈中执行。  
 异步任务分为宏任务（setTimeout,setInterval,script）和微任务(promise.then,process.nextTick);  
 微任务总是执行在同步任务之后，宏任务之前
-```
+
 <br />
 
 ### 对promise的理解
-```
-promise是一种异步编程的解决方案，解决了回掉嵌套太多导致代码臃肿，降低可读性。es6提供了这个API，并纳入标准。  
-简单说promise就是一个容器，里面存储着某个未来才会结束的事件（通常是异步）    
+
+> promise是一种异步编程的解决方案，解决了回掉嵌套太多导致代码臃肿，降低可读性。es6提供了这个API，并纳入标准。  
+> 简单说promise就是一个容器，里面存储着某个未来才会结束的事件（通常是异步）    
 promise本身包含三种状态：pending，fulfilled，rejected，状态只能从pending--->fulfilled, pending--->rejected，不可逆；  
 promise有.then的方法，返回也是一个promise对象，可以进行链式调用  
-缺点：一旦创建无法取消，如果不设置回调，promise内部抛出错误，不会反应到外部，当处于pending状态时，无法得知目前进展到哪个阶段了。
-```
+> 缺点：一旦创建无法取消，如果不设置回调，promise内部抛出错误，不会反应到外部，当处于pending状态时，无法得知目前进展到哪个阶段了。
+
 <br />
 
 ### async/await、 */generator
-```
-async/await：es7方法，用同步的思维解决异步问题，相比与promise的优势在于处理.then的链式调用，能是代码更加的清晰，缺点是可能会导致性能问题，因为await会阻塞代码。 返回的是一个promise。   
 
-*/generator函数：es6方法，也是用来解决异步编程的问题，通过*标记这是一个generator函数，内部通过yield来暂停代码，通过.next()来恢复执行，执行.next()返回的是一个对象{value: 值， down: 是否结束}  
+1. async/await：es7方法，用同步的思维解决异步问题，相比与promise的优势在于处理.then的链式调用，能是代码更加的清晰，缺点是可能会导致性能问题，因为await会阻塞代码。 返回的是一个promise。   
 
-async相比generator相比多了内部的执行器，其次是await的后面可以跟promise及其他原始类型的数据，yield后面只能跟thunk函数和promise  
-```
+2. */generator函数：es6方法，也是用来解决异步编程的问题，通过*标记这是一个generator函数，内部通过yield来暂停代码，通过.next()来恢复执行，执行.next()返回的是一个对象{value: 值， down: 是否结束}  
+
+3. async相比generator相比多了内部的执行器，其次是await的后面可以跟promise及其他原始类型的数据，yield后面只能跟thunk函数和promise  
+
 
 ### apply,call,bind的理解
 ```javascript
@@ -128,12 +129,10 @@ Function.prototype.myBind = function (context) {
 <br />
 
 ### 对webpack的理解
-```
-它是一个模块加载兼打包的一个工具，他能把各种资源当作模块来加载；  
+> 它是一个模块加载兼打包的一个工具，他能把各种资源当作模块来加载；  
 两大特色是code spliting和tree shaking  
 前者：代码分割，按需加载chunks，后者：通过对比把没有用的代码通过插件的方式清除掉  
 
-```
 
 ### Common JS、AMD、CMD、UMD的区别
 - Common js是服务端模块的规范，NodeJS采用了这个规范，规范规定一个单独的文件就是一个模块，加载模块需要使用require方法，返回内部exports对象。
@@ -142,4 +141,56 @@ Function.prototype.myBind = function (context) {
     + 多个js文件可能有依赖的关系，被依赖的文件需要早于依赖它的文件加载到浏览器中  
     + js加载的时候浏览器会停止页面渲染，加载文件越多，页面失去响应时间越长  
 - CMD，同AMD一样，需要seaJS来运行，同AMD的区别是CMD推崇就近依赖，只在用到某个模块的时候在区require，而AMD推崇依赖前置，在定义模块的时候就要声明其依赖的模块  
-- UMD，是AMD和CommonJS的组合
+- UMD，是AMD和CommonJS的组合  
+
+
+### 从url输入到显示页面的步骤
+0. 输入完url后先先检查是否有缓存，如果命中缓存，则直接从缓存中读取资源  
+1. DNS解析 - 找出真是的ip地址发起服务器请求  
+    - 先检查本地hosts文件是否存在域名映射，如果存在，则解析结束，返回ip
+    - 如果本地没有则查找本地DNS缓存，如果存在，则解析结束，返回ip
+    - 如果本地DNS缓存没有命中，则查找本地的DNS服务器，如果存在，则解析结束，返回ip
+    - 如果本地DNS服务器已经缓存了此域名，则解析结束，返回ip
+    - 如果以上都解析失败，本地DNS服务器会把请求发送至*根DNS服务器*，根服务器收到请求后会返回一个负责该顶级域名服务器的ip，本地DNS服务器收到ip后，将会请求这个ip对应的服务器，然后这样逐层查找，直到找到域名的主机，返回url对应的ip
+2. TCP链接（三次握手 || 四次挥手）
+    - 三次握手：（，同步SYN，终止FIN）
+        * 客户端主动打开，发送连接请求报文段，将SYN标识位置为1，Sequence Number(序列号)置为x（TCP规定SYN=1时不能携带数据，x为随机产生的一个值），然后进入SYN_SEND状态  
+        * 服务器收到SYN报文段进行确认，将SYN标识位置为1，ACK置为1，Sequence Number置为y，Acknowledgment Number(确认序列号)置为x+1，然后进入SYN_RECV状态，这个状态被称为半连接状态  
+        * 客户端再进行一次确认，将ACK置为1（此时不用SYN），Sequence Number置为x+1，Acknowledgment Number置为y+1发向服务器，最后客户端与服务器都进入ESTABLISHED状态  
+        ![TCP](img/TCP_before.png)  
+        > 为什么需要三次握手？  
+        > 首先解释下这些字的意义：  
+        > 确认ACK：=1字段有效,=0无效，在连接建立后这个值必须为1  
+        > 同步SYN：在建立连接时用来同步序号，
+        > 终止FIN：用来释放连接，=1时表示此报文的发方的数据已经发送完毕，并要求释放连接  
+        > 所以主要是为了防止已经失效的连接（因为某些网络因素而延迟到达服务器的请求）又回传到了服务器，而造成的资源浪费，如果只有两次，那么上述情况一但回传到了服务器，服务器就建立了连接等待客户端的请求，但是客户端并没有请求，服务器却一直在等待，这样许多服务器的资源就被浪费了
+    - 四次挥手  
+        * 客户端发送一个报文给服务端（没有数据），其中FIN设置为1，Sequence Number置为u，客户端进入FIN_WAIT_1状态  
+        * 服务端收到来自客户端的请求，发送一个ACK给客户端，Acknowledge置为u+1，同时发送Sequence Number为v，服务端年进入CLOSE_WAIT状态  
+        * 服务端发送一个FIN给客户端，ACK置为1，Sequence置为w，Acknowledge置为u+1，用来关闭服务端到客户端的数据传送，服务端进入LAST_ACK状态 
+        * 客户端收到FIN后，进入TIME_WAIT状态，接着发送一个ACK给服务端，Acknowledge置为w+1，Sequence Number置为u+1，最后客户端和服务端都进入CLOSED状态  
+        ![TCP](img/TCP_after.png)  
+        > 为什么是四次挥手？
+        > 因为TCP是双工通信，双方都可以主动关闭连接，四次挥手也是为了更好的关闭连接，client发送FIN告诉服务器我已经完成发送了，serve回复ack来确认我直到了，这样就关闭了client--->server的信通道，但是还可以接口server ---> client, 所以server也发送FIN表示我也不在发送数据了，client也发送一个ack确认表示知道了，这样就关闭了server到client的信通道。
+3. 浏览器发送http请求接口  
+4. 服务端处理（将数据返回给客户端）  
+5. 关闭TCP连接    
+6. 浏览器解析资源并布局渲染  
+    - 渲染的原理：浏览器接收到html后先解析成dom树和cssom树，构建render树，布局render树，绘制render树  
+    - 在布局render树的时候涉及到两个概念回流reflow和重绘repaint
+    > reflow: 计算dom的位置及大小  
+    > repaint: 计算字体、颜色等过程  
+
+
+### 网站的性能优化和SEO 
+1. 性能优化
+    - 减少http的请求，设置合理的缓存  
+    > 合并css、合并js、雪碧图，小图片使用base64，使用icon字体代替小图标  
+    > 强缓存/协商缓存的应用
+    - 服务器方便可以使用CDN（内容分发网络）,使用Gzip压缩
+    - css放在页面顶部，使用link标签，js放在底部，压缩css和js
+    - 禁止使用iframe，因为他会阻塞onload事件，禁止使用git，降低cpu的消耗，使用css3代替动画，减少js操作dom
+    - 减少引起重绘和回流的操作
+    - 使用CDN: 因为CND缓存方便，突破浏览器的并发限制，节约cookie宽带，节约主域名的连接速度，防止不必要的安全问题  
+    - 使用http/2.0: 因为2.0版本中引入了多路复用，能够让多个请求使用同一个tcp链接，加快了网页的加载速度，并且还支持Header压缩，进一步的减少了请求的数据大小
+    - 图片使用懒加载技术
