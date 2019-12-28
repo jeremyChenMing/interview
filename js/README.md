@@ -1,5 +1,86 @@
 js相关问答
 ===
+### typeof、instanceof  
+* typeof: 对于原始(基本)类型来说，除了null外都可以正确显示类型
+    ```javascript
+        1 // number
+        'a' // string
+        undefined // undefined
+        true // boolean
+        Symbol() // symbol
+        null // object
+        // 注： NaN 属于number，NaN !== NaN （true)
+        // 注：对于函数而言，显示function，[],{}显示object
+    ```  
+* instanceof: 判断对象的类型，因为内部的机制是通过判断对象的原型链中是不是能找到类型的prototype  
+    ```javascript
+        const Person = function() {}
+        const p1 = new Person()
+        p1 instanceof Person // true
+
+        var str = 'hello world'
+        str instanceof String // false
+
+        var str1 = new String('hello world')
+        str1 instanceof String // true
+        //注： 对于原始类型来说，你想直接通过 instanceof来判断类型是不行的
+    ```
+
+### 类型转换  
+1. 转换为boolean
+    > 在条件判断时，除了 undefined，null， false， NaN， ''， 0， -0，其他所有值都转为 true，包括所有对象  
+2. 对象转原始类型  
+    > 对象转换类型的时候，调用内置的[[ToPrimitive]]函数，逻辑一般如下：  
+    - 如果已经是原始类型了，就不需要转换了
+    - 调用x.valueOf(), 如果转换为基础类型，就返回转换的值
+    - 调用x.toString(), 如果转换为基础类型，就返回转换的值
+    - 如果都没有返回原始类型就会报错
+    ```javascript
+        toPrimitive(input,preferedType?) // input是值，preferedType是转换类型，可以是字符串，也可以是数字
+        // 如果转换类型是number 则步骤同上，如果转换类型为string，则2、3交换执行，先toString
+        // 也可以省略preferedType，此时，日期会被当作字符串，其他当作number
+        [] + [] = ''
+        // 按照上述步骤，valueOf返回的依然是对象，所以执行toString返回的''
+        // '' + '' = ''
+        [] + {} = "[object Object]"
+        // []转换后为‘’，{} 转换后为"[object Object]"
+        {} + [] = 0
+        // 特殊的一点是: 如果{}既可以被认为是代码块，又可以被认为是对象，那么js会把这个当作代码块 即 + [],快速转换数字类型，即0
+
+        1 + [] === '1' // [].toString() === '', 1 + '' === '1'
+    ```
+3. 四则运算  
+    - 运算中其中一方为字符串，那么就会把另一方也转换为字符串
+    - 如果一方不是字符串或者数字，那么会将它转换为数字或者字符串
+    ```javascript
+        1 + '1' // '11'
+        true + true // 2
+        4 + [1,2,3] // "41,2,3"
+        // 另外这个表达式 'a' + + 'b'
+        // + 'b' 等于 NaN， + '1'这种形式可以快速转换为数字类型Number('b') = NaN
+        // 所有答案是'aNaN'
+    ```
+    - 除了加法的运算符来说，只要其中一方是数字，另一方就会被转换为数字  
+    ```javascript
+        4 * '3' // 12
+        4 * [] // 0
+        4 * [1, 2] // NaN 
+    ```
+4. 比较运算符
+    - 如果是对象，就通过toPrimitive转换为对象
+    - 如果是字符串，就通过unicode字符索引来比较
+    ```javascript
+        let a = {
+            valueOf() {
+                return 0
+            },
+            toString() {
+                return '1'
+            }
+        }
+        a > -1 // true
+    ```
+
 ### 什么是原型对象，原型链？ 
 
 * 构造函数
@@ -7,7 +88,6 @@ js相关问答
 * 原型对象
     - 每一个构造函数在被创建出的时候系统会自动给这个构造函数创建并关联一个对象，这个对象就叫做原型对象，通过prototype来访问  
     - 作用：实现继承  
-
 ```javascript
 function Child(name, age) {
     this.name = name
@@ -23,8 +103,9 @@ Object.prototype.__proto__ // null 顶层
 
 查找属性，如果本身没有，则会去__proto__中查找，也就是构造函数的显式原型中查找，如果构造函数中也没有该属性，因为构造函数也是对象，也有__proto__，那么会去它的显式原型中查找，一直到null
 ```
->原型链实际上就是上面三者（原型，构造函数，实例）之间的关系，我们通过这层关系层层寻找对象>的属性，这种关系就构成了一种链式感，也可以定义为查找对象属性的关系。
-
+>原型链实际上就是上面三者（原型，构造函数，实例）之间的关系，我们通过这层关系层层寻找对象>的属性，这种关系就构成了一种链式感，也可以定义为查找对象属性的关系。  
+* 关系图如下：  
+![object](img/object.png)  
 <br />
 
 ### 什么是闭包，作用域链？  
@@ -39,11 +120,11 @@ Object.prototype.__proto__ // null 顶层
 <br />
 
 ### 事件循环(event loop)
-
-> 它是js执行事件顺序，分为三个部分：执行栈、webAPI、队列（callback queue）；首先执行所有的同步任务，当遇到异步任务时，调用webAPI，将任务放在队列里，当执行栈中的任务为空的时候，事件循环机制就会按照顺序从队列里取出任务放在执行栈中执行。  
-异步任务分为宏任务（setTimeout,setInterval,script）和微任务(promise.then,process.nextTick);  
-微任务总是执行在同步任务之后，宏任务之前
-
+1. 它是js执行事件的机制，js在执行的过程中产生执行环境，这些执行环境会被顺序的加入到执行栈中，如果遇到异步代码，会被挂起并加入到```Task```队列中，一旦执行战为空，```event loop```就会从```Task```队列```callback queue```中拿出需要执行的代码放入到执行栈中执行  
+2. 任务分为宏任务和微任务： 
+    > 宏任务： ```script、 setTimeout、 setInterval、 setImmediate、 I/O、 UI rendering```  
+    > 微任务： ```process.nextTick、 promise.then、 Object.observe、 MutationObserver、 ```
+    > 顺序：同步任务 -> 执行栈为空，查询是否又微任务-> 执行所有的微任务-> 必要下渲染UI-> 开启下一轮的Event loop，执行宏任务中的异步代码
 <br />
 
 ### 对promise的理解
@@ -52,7 +133,8 @@ Object.prototype.__proto__ // null 顶层
 > 简单说promise就是一个容器，里面存储着某个未来才会结束的事件（通常是异步）    
 promise本身包含三种状态：pending，fulfilled，rejected，状态只能从pending--->fulfilled, pending--->rejected，不可逆；  
 promise有.then的方法，返回也是一个promise对象，可以进行链式调用  
-> 缺点：一旦创建无法取消，如果不设置回调，promise内部抛出错误，不会反应到外部，当处于pending状态时，无法得知目前进展到哪个阶段了。
+> 缺点：一旦创建无法取消，如果不设置回调，promise内部抛出错误，不会反应到外部，当处于pending状态时，无法得知目前进展到哪个阶段了  
+> 手写用例在example中的promise.js  
 
 <br />
 
@@ -66,26 +148,12 @@ promise有.then的方法，返回也是一个promise对象，可以进行链式�
 
 
 ### apply,call,bind的理解
-```javascript
-this总是指向调用某个方法的对象，但是使用call，apply可以改变this的指向问题；  
-.call(thisObjet, arg1, arg2, arg3...)  
-例子：A.call(B, x,y);其实就是把A函数放到B中执行，参数为x,y；  apply和call一样，只是传参的方式不一样，后者用[x,y]  
-function myfunc1(){
-    this.name = 'Lee';
-    this.myTxt = function(txt) {
-        console.log( 'i am',txt );
-    }
-}
-function myfunc2(){
-    myfunc1.call(this);
-}
-var myfunc3 = new myfunc2();
-myfunc3.myTxt('Geing'); // i am Geing
-console.log (myfunc3.name);	// Lee  
-
-区别：前二者是立即执行，bind返回的是函数，所以需要手动触发A.bind(B)();  
-```
-a）手写call,apply 
+* 三者都是为了改变函数运行时上下文this指向而存在的  
+* ```this```总是指向调用某个方法的对象，但是使用call，apply，bind可以改变this的指向问题  
+* 区别：
+    - 三者接收的第一个参数都是要绑定到this的指向
+    - apply的第二个参数是一个数组，call和bind的参数可以时多个
+    - bind不会立即调用，其他两个会立即调用
 ```javascript
 Function.prototype.myCall = function (ctx) {
     // console.log(ctx); // 指向data
@@ -110,22 +178,10 @@ Function.prototype.myApply = function (context) {
     delete context.fn;
     return result
 }  
-Function.prototype.myBind = function (context) {
-  if (typeof this !== 'function') {
-    throw new TypeError('Error')
-  }
-  const _this = this
-  const args = [...arguments].slice(1)
-  // 返回一个函数
-  return function F() {
-    // 因为返回了一个函数，我们可以 new F()，所以需要判断
-    if (this instanceof F) {
-      return new _this(...args, ...arguments)
-    }
-    return _this.apply(context, args.concat(...arguments))
-  }
-}
+
 ```
+> 手写用例在example中的call_apply_bind.js  
+
 <br />
 
 ### 对webpack的理解
@@ -140,7 +196,7 @@ Function.prototype.myBind = function (context) {
 - AMD，使用时需要针对js采用对应的函数库也就是requireJS，主要解决的问题包括：
     + 多个js文件可能有依赖的关系，被依赖的文件需要早于依赖它的文件加载到浏览器中  
     + js加载的时候浏览器会停止页面渲染，加载文件越多，页面失去响应时间越长  
-- CMD，同AMD一样，需要seaJS来运行，同AMD的区别是CMD推崇就近依赖，只在用到某个模块的时候在区require，而AMD推崇依赖前置，在定义模块的时候就要声明其依赖的模块  
+- CMD，同AMD一样，需要seaJS来运行，同AMD的区别是CMD推崇就近依赖，只在用到某个模块的时候在取require，而AMD推崇依赖前置，在定义模块的时候就要声明其依赖的模块  
 - UMD，是AMD和CommonJS的组合  
 
 
