@@ -7,13 +7,33 @@
     <title>example</title>
 </head>
 <body>
-    
+    <input type="text" id="input" />
+    <div id="span"></div>
     <!-- <script src="js/promise.js"></script> -->
     <!-- <script src="js/call_apply_bing.js"></script> -->
     <script>
-        window.onload = function() {
-            
-        }
+    window.onload = function() {
+        let obj = {};
+        let input = document.getElementById('input');
+        let span = document.getElementById('span');
+        // 数据劫持
+        Object.defineProperty(obj, 'text', {
+            configurabel: true,
+            enumerable: true,
+            get() {
+                console.log('数据获取')
+            },
+            set(val) {
+                console.log(val)
+                input.value = val
+                span.innerText = val
+            }
+        })
+        // 输入监听
+        input.addEventListener('keyup', function(e) {
+        obj.text = e.target.value
+        })
+    }
 
     </script>
 </body>

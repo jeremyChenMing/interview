@@ -11,6 +11,30 @@ Vue
 
 > vue数据双向绑定的原理(_也即是Observer_)：采用数据劫持和发布/订阅者模式的方式，通过```Object.defineProperty()```来劫持各个属性的```setter```，```getter```，在数据变动时发布消息给订阅者，触发相应的监听回调用；   
 
+### 实现一个数据的双向绑定
+```javascript
+let obj = {};
+let input = document.getElementById('input');
+let span = document.getElementById('span');
+// 数据劫持
+Object.defineProperty(obj, text, {
+    configurabel: true,
+    enumerable: true,
+    get() {
+        console.log('数据获取')
+    },
+    set(val) {
+        input.value = val
+        span.inderHTML = val
+    }
+})
+// 输入监听
+input.addEventListener('keyup', function(e) {
+  obj.text = e.target.value
+})
+```
+
+
 <br />
 
 

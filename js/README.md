@@ -146,6 +146,37 @@ promise有.then的方法，返回也是一个promise对象，可以进行链式�
 
 3. async相比generator相比多了内部的执行器，其次是await的后面可以跟promise及其他原始类型的数据，yield后面只能跟thunk函数和promise  
 
+# 实现New方法
+new 是js中的关键词，它的步骤包括一下：  
+    1. 创建一个新对象
+    2. 链接到原型上
+    3. 绑定this
+    4. 返回新对象  
+```javascript
+function create() {
+    // 创建一个空的对象
+    let obj = new Object()
+    // 获得构造函数
+    let Con = [].shift.call(arguments) // con就是function people
+    // 链接到原型
+    obj.__proto__ = Con.prototype
+    // 绑定 this，执行构造函数
+    let result = Con.apply(obj, arguments) // result就是People对象
+    // 让Con在object里面执行，也就有了name，age属性了，由于函数People没有返回对象，所以直接返回obj
+    // 确保 new 出来的是个对象
+    return typeof result === 'object' ? result : obj
+}
+
+function People(name,age) {
+    this.name = name
+    this.age = age
+}
+
+let peo = create(People,'Bob',22)
+console.log(peo.name)
+console.log(peo.age)
+```
+
 
 ### apply,call,bind的理解
 * 三者都是为了改变函数运行时上下文this指向而存在的  
@@ -249,4 +280,7 @@ Function.prototype.myApply = function (context) {
     - 减少引起重绘和回流的操作
     - 使用CDN: 因为CND缓存方便，突破浏览器的并发限制，节约cookie宽带，节约主域名的连接速度，防止不必要的安全问题  
     - 使用http/2.0: 因为2.0版本中引入了多路复用，能够让多个请求使用同一个tcp链接，加快了网页的加载速度，并且还支持Header压缩，进一步的减少了请求的数据大小
-    - 图片使用懒加载技术
+    - 图片使用懒加载技术  
+
+### 节流函数和防抖函数的实现
+### 柯里化函数的实现
