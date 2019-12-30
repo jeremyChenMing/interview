@@ -7,34 +7,23 @@
     <title>example</title>
 </head>
 <body>
-    <input type="text" id="input" />
+    <div id="container"></div>
     <div id="span"></div>
+    
+    <!-- 手写promise -->
     <!-- <script src="js/promise.js"></script> -->
+    <!-- 手写call apply bind -->
     <!-- <script src="js/call_apply_bing.js"></script> -->
+    <!-- 实现数据双向绑定 -->
+    <!-- <script src="js/definedProperty.js"></script> -->
+
+    <!-- requestAnimation -->
+    <!-- <script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+    <script src="js/requestAnimation.js"></script> -->
     <script>
     window.onload = function() {
-        let obj = {};
-        let input = document.getElementById('input');
-        let span = document.getElementById('span');
-        // 数据劫持
-        Object.defineProperty(obj, 'text', {
-            configurabel: true,
-            enumerable: true,
-            get() {
-                console.log('数据获取')
-            },
-            set(val) {
-                console.log(val)
-                input.value = val
-                span.innerText = val
-            }
-        })
-        // 输入监听
-        input.addEventListener('keyup', function(e) {
-        obj.text = e.target.value
-        })
+        
     }
-
     </script>
 </body>
 </html>

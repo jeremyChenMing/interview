@@ -134,7 +134,7 @@ Object.prototype.__proto__ // null 顶层
 promise本身包含三种状态：pending，fulfilled，rejected，状态只能从pending--->fulfilled, pending--->rejected，不可逆；  
 promise有.then的方法，返回也是一个promise对象，可以进行链式调用  
 > 缺点：一旦创建无法取消，如果不设置回调，promise内部抛出错误，不会反应到外部，当处于pending状态时，无法得知目前进展到哪个阶段了  
-> 手写用例在example中的promise.js  
+> 手写用例在example中的[promise.js](https://github.com/jeremyChenMing/interview/tree/master/js/example/js)  
 
 <br />
 
@@ -216,10 +216,17 @@ Function.prototype.myApply = function (context) {
 <br />
 
 ### 对webpack的理解
-> 它是一个模块加载兼打包的一个工具，他能把各种资源当作模块来加载；  
-两大特色是code spliting和tree shaking  
-前者：代码分割，按需加载chunks，后者：通过对比把没有用的代码通过插件的方式清除掉  
-
+1. 它是一个模块加载兼打包的一个工具，他能把各种资源当作模块来加载；  
+2. 两大特色是code spliting和tree shaking  
+    * 前者：代码分割，按需加载chunks，后者：通过对比把没有用的代码通过插件的方式清除掉  
+3. 减少打包时间:
+    - 优化loader，例如include、exclude的使用
+    - dllplugin
+    - 代码压缩（UglifyJS）
+4. 减少打包体积:
+    - 使用webpack的展示体积包插件,然后分析哪些包过大
+    - 按需加载 code spliting
+    - tree shaking
 
 ### Common JS、AMD、CMD、UMD的区别
 - Common js是服务端模块的规范，NodeJS采用了这个规范，规范规定一个单独的文件就是一个模块，加载模块需要使用require方法，返回内部exports对象。
@@ -269,18 +276,127 @@ Function.prototype.myApply = function (context) {
     > repaint: 计算字体、颜色等过程  
 
 
+### 为什呢操作DOM会慢
+因为 DOM是属于渲染引擎中的东西，而 JS 又是 JS 引擎中的东西。当我们通过 JS 操作 DOM 的时候，其实这个操作涉及到了两个线程之间的通信，那么势必会带来一些性能上的损耗。操作 DOM 次数一多，也就等同于一直在进行线程之间的通信，并且操作 DOM 可能还会带来重绘回流的情况，所以也就导致了性能上的问题  
+> 问题：一次性插入几万个dom，如何实现页面不卡顿？  
+> 思路：如何分批次的插入dom。所以第一种是使用requestAnimationFrame的方式去循环插入DOM。第二种是使用虚拟滚动的方式去渲染，即先搞定可视区域，然后滚动插入元素。
+
+> 用例requestAnimation在example里面的requestAnimation.js方法一
+
+> 用例可视区域在example里面的requestAnimation.js方法二
+
+
 ### 网站的性能优化和SEO 
 1. 性能优化
     - 减少http的请求，设置合理的缓存  
     > 合并css、合并js、雪碧图，小图片使用base64，使用icon字体代替小图标  
     > 强缓存/协商缓存的应用
-    - 服务器方便可以使用CDN（内容分发网络）,使用Gzip压缩
     - css放在页面顶部，使用link标签，js放在底部，压缩css和js
     - 禁止使用iframe，因为他会阻塞onload事件，禁止使用git，降低cpu的消耗，使用css3代替动画，减少js操作dom
     - 减少引起重绘和回流的操作
-    - 使用CDN: 因为CND缓存方便，突破浏览器的并发限制，节约cookie宽带，节约主域名的连接速度，防止不必要的安全问题  
+    - 使用CDN: 因为CND缓存方便，突破浏览器的并发限制，节约cookie宽带，节约主域名的连接速度，防止不必要的安全问题，Gzip压缩  
     - 使用http/2.0: 因为2.0版本中引入了多路复用，能够让多个请求使用同一个tcp链接，加快了网页的加载速度，并且还支持Header压缩，进一步的减少了请求的数据大小
     - 图片使用懒加载技术  
 
+
+### 跨域  
+1. 因浏览器同源策略的影响，我们需要从别的域名获取数据，此时就需要跨域，同源是指协议、域名、端口号相同，跨域的方式有以下几种：
+    * JSONP：利用script标签的src属性，提供一个回调函数来接收数据
+    > 兼容性不错，但是只能请求get  
+    * document.domain：该方式只能用于主域名相同的情况下，例如```a.text.com``` 和 ```b.text.com```，只需要给页面添加```document.domain = "text.com"```  
+    * postMessage：通常用于获取潜入页面中的第三方数据，一个页面发送消息，另一个页面判断来源并接收消息  
+    ```javascript
+    // 发送消息端
+    window.parent.postMessage('message', 'http://test.com')
+    // 接收消息端
+    var mc = new MessageChannel()
+    mc.addEventListener('message', event => {
+    var origin = event.origin || event.originalEvent.origin
+        if (origin === 'http://test.com') {
+            console.log('验证通过')
+        }
+    })
+    ```  
+    * **CORS**：跨域资源共享(Cross-origin Resource Sharing)，IE10+，主要是通过一些额外的头部信息来完成资源安全的访问  
+        - 简单请求：使用GET、POST、HEAD请求，字段content-type包含三者之一(text/plain、multipart/form-data、application/x-www-form-urlencoded)  
+        > 请求端头部携带origin: foo.example等  
+        > 服务端头部返回携带: Access-Control-Allow-Origin: * （允许任意外域访问）
+        - 非简单请求：字段content-type不是上述的，使用PUT、DELETE、OPTIONS、PATCH等，先进行预检请求，在发送实际请求  
+        > client使用option进行预检请求，使用access-control-request-method/headers等，server端使用access-control-allow-methods/headers/origin等
+
+
+### 存储和Service Worker
+1. 存储  
+
+特性 | cookie | localStorage | sessionStorage | indexDB
+- | :-: | :-: | :-: | -:
+数据生命周期 | 一般由服务器生成 | 除非被清理，否则一直存在 | 页面关闭就清理 | 除非被清理，否则一直存在| 
+数据存储大小 | 4K| 5M | 5M | 无限|
+与服务端通信 | 每次都会携带在header中| 不参与 | 不参与 | 不参与|  
+
+- cookie：用于记录一些用户相关的状态，因为需要注意其安全性，优点是兼容性好，缺点是会增加网络的流量，其次还有数据量有限。可以使用js来进行操作，一般用于存储用户的登录信息，跟踪用户行为，创建购物车等用途。
+ 
+属性 | 作用 |
+- | :-: | :-: | :-: | -:
+value | 存储值用的 |
+http-only | 不能通过js访问，减少攻击 |
+secure | 只能在https的请求中携带 |
+same-site | 规定浏览器不能在跨域中携带cookie，减少CRSF攻击 |  
+
+2. service worker: 它是运行在浏览器背后的独立的线程，一般可以用于实现缓存的功能，使用时必须为HTTPS协议来保障安全
+    - 工作原理：实现缓存功能一般分为三个步骤：首先需要先注册 Service Worker，然后监听到 install 事件以后就可以缓存需要的文件，那么在下次用户访问的时候就可以通过拦截请求的方式查询是否存在缓存，存在缓存的话就可以直接读取缓存文件，否则就去请求数据。
+    > 特点：我们可以自己控制缓存哪些文件、如何匹配缓存、如何读取缓存，并且缓存是持续性的。
+
+
+3. 上述的知识点主要用于性能的方面的考虑，缓存可以减少网络请求所带来的消耗，也是一个网站优化的必要手段，我们从两个位置来解析下缓存:
+    - 缓存的位置依次为： Server Worker、 Memory Cache、 Disk Cache、 PushCache，如果都没有就会进行网络请求。Memory是内存中的缓存，读取快，但是周期短，会随着进程的释放而释放。Disk是存储在硬盘上的，读取慢，但是什么都能存。PUSH是http/2中的内容，当以上三种都没有被启用的时候，他才会被使用，缓存时间短暂，只在会话session存在，一旦会话结束就被释放。
+    - 缓存的策略： 强缓存和协商缓存
+    > 强缓存： http通过Expires和Cache-control来实现的，但是expires受本地时间的限制，可能会出现差错，所以才有了Cache-control，优先与expires，  
+    > 协商缓存：http通过```Last-Modified/If-Modified-Since``` 和 ```Etag/If-None-Match```  
+        - 前者是根据时间来判断资源是否需要更新，但是也会限于时间的因素才会有Etag的出现  
+        - 后者Etag是资源的唯一标识符，一旦资源被修改值就改变  
+
+### websocket
+
+
 ### 节流函数和防抖函数的实现
+1. 防抖函数：将对此执行的函数只执行最后一次，简单实现如下:
+```javascript
+// func是用户传入需要防抖的函数
+// wait是等待时间
+const debounce = (func, wait = 50) => {
+  // 缓存一个定时器id
+  let timer = 0
+  // 这里返回的函数是每次用户实际调用的防抖函数
+  // 如果已经设定过定时器了就清空上一次的定时器
+  // 开始一个新的定时器，延迟执行用户传入的方法
+  return function(...args) {
+    if (timer) clearTimeout(timer)
+    timer = setTimeout(() => {
+      func.apply(this, args)
+    }, wait)
+  }
+}
+```
+2. 节流：将多次执行的函数编程每隔一段时间执行一次
+```javascript
+// func是用户传入需要防抖的函数
+// wait是等待时间
+const throttle = (func, wait = 50) => {
+    // 上一次执行该函数的时间
+    let lastTime = 0
+    return function (...args) {
+        // 当前时间
+        let now = +new Date()
+        // 将当前时间和上一次执行函数时间对比
+        // 如果差值大于设置的等待时间就执行函数
+        if (now - lastTime > wait) {
+            lastTime = now
+            func.apply(this, args)
+        }
+    }
+}
+```
+> 测试用例在example中的debounce_throttle.js
+
 ### 柯里化函数的实现
