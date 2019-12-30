@@ -211,7 +211,7 @@ Function.prototype.myApply = function (context) {
 }  
 
 ```
-> 手写用例在example中的call_apply_bind.js  
+> 手写用例在example中的[call_apply_bind.js](https://github.com/jeremyChenMing/interview/tree/master/js/example/js)  
 
 <br />
 
@@ -281,9 +281,9 @@ Function.prototype.myApply = function (context) {
 > 问题：一次性插入几万个dom，如何实现页面不卡顿？  
 > 思路：如何分批次的插入dom。所以第一种是使用requestAnimationFrame的方式去循环插入DOM。第二种是使用虚拟滚动的方式去渲染，即先搞定可视区域，然后滚动插入元素。
 
-> 用例requestAnimation在example里面的requestAnimation.js方法一
+> 用例requestAnimation在example里面的[requestAnimation.js](https://github.com/jeremyChenMing/interview/tree/master/js/example/js)方法一
 
-> 用例可视区域在example里面的requestAnimation.js方法二
+> 用例可视区域在example里面的[requestAnimation.js](https://github.com/jeremyChenMing/interview/tree/master/js/example/js)方法二
 
 
 ### 网站的性能优化和SEO 
@@ -397,6 +397,6 @@ const throttle = (func, wait = 50) => {
     }
 }
 ```
-> 测试用例在example中的debounce_throttle.js
+> 测试用例在example中的[debounce_throttle.js](https://github.com/jeremyChenMing/interview/tree/master/js/example/js)
 
 ### 柯里化函数的实现
