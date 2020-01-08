@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            background-color: #cccccc;
+        }
+        body{
+            border: 10px solid red;
+            padding: 15px;
+        }
+        #root {
+            height: 500px;
+            background-color: teal;
+            overflow: hidden;
+            width: 700px;
+            overflow: hidden;
+            /* display: table-cell;
+            vertical-align: middle; */
+            text-align: center;
+        }
+
+        img {
+            width: 300px;
+            display: block;
+            height: 170px;
+            /* vertical-align: middle; */
+        }
+        p{
+            height: 100px;
+            line-height: 100px;
+            color: red;
+        }
+        #p1{
+            background-color: royalblue;
+            height: 200px;
+            overflow-y: auto;
+        }
+        #p1 span{
+            display: block;
+            width: 60%;
+            background-color: #f5f5f5;
+            height: 40px;
+            line-height: 40px;
+        }
+    </style>
+</head>
+
+<body id="body">
+    <div id="root">
+        <img id="img" src="video.png" alt="icon">
+    </div>
+    <img src="video.png" alt="icon">
+    <p id="p1">
+        <span>hello world</span>
+        <span>hello world</span>
+        <span>hello world</span>
+        <span>hello world</span>
+        <span>hello world</span>
+        <span>hello world</span>
+        <span>hello world</span>
+        <span>hello world</span>
+        <span>hello world</span>
+        <span>hello world</span>
+    </p>
+    <p>hello jeremy</p>
+    <script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+
+    <script type="text/javascript">
+        window.onload = () => {
+            var body = document.getElementById('body')
+            var img = document.getElementById('img')
+            var p1 = document.getElementById('p1')
+
+            // 增加了*，样式表如上
+            // 内容宽度与高度 850, 920
+            // console.log($(document).width(), $(document).height(), '内容宽度与高度')
+
+            // 视口宽度为850-$(window).width()， 高度为766-$(window).height()
+            // console.log($(window).width(), $(window).height(), '视口宽度与高度')
+
+
+            // body.offsetWidth || offsetHeight 相当于视口的宽度和高度
+            // console.log(body.offsetWidth, body.offsetHeight) // 850 X 920
+
+            // img的offsetLeft || offsetTop 自身相对于视口的位置
+            // console.log(img.offsetLeft, img.offsetTop)
+
+
+
+            // body.clientWidth || clinetHeight 相当于内容的高度（content + padding）
+            // console.log(body.clientWidth, body.clientHeight) // 830 X 884
+            // body顶部边框的像素值, 只有左和上
+            // console.log(body.clientLeft, body.clientTop) // 10
+
+            // body.scrollWidth || scrollHeight, 宽度、高度不包含body的border
+            // console.log(body.scrollWidth, body.scrollHeight)
+
+            // body.scrollTop || scrollLeft 滚动的距离，如果是body的话一般使用document.documentElement.scrollTop
+            // 如果是某个盒子的话就使用p1
+            // console.log(document.documentElement.scrollTop, '--')
+            // $('#p1').click(function() {
+            //     console.log(p1.scrollTop, p1.scrollLeft, $(document).scrollTop())
+            // })
+        };
+    </script>
+</body>
+
+</html>

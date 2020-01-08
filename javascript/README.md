@@ -127,8 +127,10 @@ Object.prototype.__proto__ // null 顶层
     > 顺序：同步任务 -> 执行栈为空，查询是否又微任务-> 执行所有的微任务-> 必要下渲染UI-> 开启下一轮的Event loop，执行宏任务中的异步代码
 <br />
 
-### 对promise的理解
-
+### 对promise的理解 以及 Promise/A+规范
+1. Promise/A+规范
+    - 一个promise的状太只能有pending\fulfilled\rejected，并且只能是pending到fulfilled、rejected，并且不可逆
+    - promise有then的方法，接受两个参数onFulfulled\onRejected，then方法返回一个promise
 > promise是一种异步编程的解决方案，解决了回掉嵌套太多导致代码臃肿，降低可读性。es6提供了这个API，并纳入标准。  
 > 简单说promise就是一个容器，里面存储着某个未来才会结束的事件（通常是异步）    
 promise本身包含三种状态：pending，fulfilled，rejected，状态只能从pending--->fulfilled, pending--->rejected，不可逆；  
@@ -294,9 +296,19 @@ Function.prototype.myApply = function (context) {
     - css放在页面顶部，使用link标签，js放在底部，压缩css和js
     - 禁止使用iframe，因为他会阻塞onload事件，禁止使用git，降低cpu的消耗，使用css3代替动画，减少js操作dom
     - 减少引起重绘和回流的操作
+        * 使用translate代替top
+        * opacity代替visibility
+        * 不要使用table布局
     - 使用CDN: 因为CND缓存方便，突破浏览器的并发限制，节约cookie宽带，节约主域名的连接速度，防止不必要的安全问题，Gzip压缩  
     - 使用http/2.0: 因为2.0版本中引入了多路复用，能够让多个请求使用同一个tcp链接，加快了网页的加载速度，并且还支持Header压缩，进一步的减少了请求的数据大小
     - 图片使用懒加载技术  
+2. SEO
+    - 合理的title、description、keywords，搜索对这三项的权重逐渐减小
+    - 语义化的html标签，能让搜索引擎容易理解网页
+    - 重要的内容不用js输出，因为爬虫不会爬取js上的内容
+    - 少用iframe，搜索引擎不会抓去iframe上的内容
+    - 非装饰性的图片必须加alt属性
+    - 提高网站的显示速度
 
 
 ### 跨域  
@@ -357,6 +369,64 @@ same-site | 规定浏览器不能在跨域中携带cookie，减少CRSF攻击 |
         - 后者Etag是资源的唯一标识符，一旦资源被修改值就改变  
 
 ### websocket
+由于http存在的弊端（消息只能由客户端推送到服务器端，而服务器端不能主动推送到客户端），导致如果服务器如果由连续的变化，这时只能使用轮询，而轮询效率过低，于是就有了websocket。  
+特点：支持双向通信，无跨域问题  
+> websocket是基于http协议
+
+### web worker
+运行与后台的js代码，不会影响页面的性能
+```javascript
+<!DOCTYPE html>
+<html>
+<head> 
+<meta charset="utf-8"> 
+<title>菜鸟教程(runoob.com)</title> 
+</head>
+<body>
+ 
+<p>计数： <output id="result"></output></p>
+<button onclick="startWorker()">开始工作</button> 
+<button onclick="stopWorker()">停止工作</button>
+ 
+<p><strong>注意：</strong> Internet Explorer 9 及更早 IE 版本浏览器不支持 Web Workers.</p>
+ 
+<script>
+var w;
+ 
+function startWorker() {
+    if(typeof(Worker) !== "undefined") {
+        if(typeof(w) == "undefined") {
+            w = new Worker("demo_workers.js");
+        }
+        w.onmessage = function(event) {
+            document.getElementById("result").innerHTML = event.data;
+        };
+    } else {
+        document.getElementById("result").innerHTML = "抱歉，你的浏览器不支持 Web Workers...";
+    }
+}
+ //
+function stopWorker() { 
+    w.terminate();
+    w = undefined;
+}
+</script>
+ 
+</body>
+</html>
+
+// demo_workers.js
+var i=0;
+
+function timedCount()
+{
+    i=i+1;
+    postMessage(i); // 向页面回传一些内容
+    setTimeout("timedCount()",500);
+}
+
+timedCount();
+```
 
 
 ### 节流函数和防抖函数的实现
@@ -400,3 +470,96 @@ const throttle = (func, wait = 50) => {
 > 测试用例在example中的[debounce_throttle.js](https://github.com/jeremyChenMing/interview/tree/master/js/example/js)
 
 ### 柯里化函数的实现
+定义：把接受多个参数的函数换成接受一个单一参数的函数，并返回接受余下参数而返回结果的新函数的技术  
+```javascript
+function curry(fn, currArgs) {
+    return function () {
+        console.log("arguments:", arguments, arguments.length)
+        var args = [].slice.call(arguments);
+        console.log("args:", args)
+        console.log('currArgs', currArgs)
+        // 首次调用时未提供最后一个参数
+        if (currArgs !== undefined) {
+            args = args.concat(currArgs);
+        }
+        // 递归出口
+        if (args.length == fn.length) {
+            console.log(1, '0', this)
+            return fn.apply(this, args);
+        } else {
+            return curry(fn, args);
+        }
+    }
+}
+
+function sumOf(a, b, c, d) {
+    return a + b + c + d;
+}
+
+// 改造普通函数，返回柯里函数
+var sum = curry(sumOf);
+console.log(sum(1,2,3,4))
+// 需要知道函数的参数的个数，个数不够的调用curry，直到满足参数个数需求fn.length，执行fn
+// 
+```  
+
+### XSS和CSRF和点击劫持和密码安全
+1. **XSS**: 跨站脚本攻击，攻击者网web页面插入恶意的html代码  
+    * 防范：对用户输入的地方进行过滤，尤其是对```'<','>',',',';'```等,其次就是任何内容写到页面前都加以encode，也就是我们常说的转译输入输出的内容  
+2. **CSRF**: 跨站请求伪造，利用用户的登录状态发起恶意的请求  
+    * 防范：请求时附带验证信息，阻止第三方网站请求接口  
+3. **点击劫持**: 是一种视觉欺骗的攻击手段。攻击者将需要攻击的网站通过 iframe 嵌套的方式嵌入自己的网页中，并将 iframe 设置为透明，在页面中透出一个按钮诱导用户点击  
+    * 防范：在http头部中加入```X-FRAME-OPTIONS```,可选三个值DENY、SAMEORIGIN、ALLOW_FROM，其次就是通过js防御，代码如下
+    ```javascript
+    <head>
+        <style id="click-jack">
+            html {
+            display: none !important;
+            }
+        </style>
+    </head>
+    <body>
+        <script>
+            if (self == top) {
+            var style = document.getElementById('click-jack')
+            document.body.removeChild(style)
+            } else {
+            top.location = self.location
+            }
+        </script>
+    </body>
+    // 以上代码的作用就是当通过 iframe 的方式加载页面时，攻击者的网页直接不显示所有内容了
+    ```  
+4. 密码安全
+    * 加盐：给原密码添加字符串以增加原密码的长度，增加暴力破解成本，其次还要限制密码错误的次数
+    * 前端加密：虽然前端加密对于安全防护来说意义不大，但是在遇到中间人攻击的情况下，可以避免明文密码被第三方获取  
+
+
+
+### 垃圾回收机制  
+1. **标记清楚**
+    - 是当变量进入环境时，将这个变量标记为“进入环境”。当变量离开环境时，则将其标记为“离开环境”。标记“离开环境”的就回收内存 
+2. **引用计数**
+    - 跟踪并记录每个值被引用的次数，次数为0就被回收  
+3. 引起内存泄漏
+    - 意外的全局变量
+    - 闭包过多的使用
+    - 被遗忘的定时器
+    - 事件绑定未解除  
+> 基本类型被存储在内存中（栈内存），引用对象被存储在内存中（堆内存）  
+> 堆和栈的数据结构不同，栈是一种```先进后出```的数据结构，堆是一种```树状```的结构  
+
+
+
+### http和https
+1. http超文本传输协议，https只是多了一个s，即SSL加密，其主要作用在加密在传输层协议上，使请求更加的安全。
+    - 区别在于：后者需要ca证书，费用较高，使用的端口号也不同，http：80，https：443
+    - https的缺点：握手阶段比较费时，缓存不如http高效，SSL证书也需要钱  
+2. http 2.0
+    - 基于http1.0后的更新，优点是提升网络速度，允许多路复用，多路复用允许同时通过单一的HTTP/2连接发送多重请求-响应信息。改善了：在http1.1中，浏览器客户端在同一时间，针对同一域名下的请求有一定数量限制（连接数量），超过限制会被阻塞。其次是首部压缩
+    - http1.1中多了一个字段connection: keep-alive字段，允许一个连接中，可以发送多个request和接受多个response
+
+
+### attribute 和 property
+1. attribute是HTML标签上的属性，例如id,class,value等，它的值是字符串，共有三个方法: setAttribute、getAttribute、removeAttribute，所有本质上这个方法添加的属性跟写标签上的属性是一样的
+2. property是js获取DOM对象上的属性，也就是一个普通的js对象，除了属性值外，还是一些事件值，如click等，property包含attribute
