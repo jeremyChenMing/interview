@@ -34,6 +34,59 @@ input.addEventListener('keyup', function(e) {
 })
 ```
 
+### defineProperty和proxy的区别  
+1. 后者的优势更大，效率及性能更高，具体体现在如下代码中，Vue3.0将会采用次属性  
+```javascript
+let obj = {
+    age: 11
+}
+let val = 1
+Object.defineProperty(obj, 'name', {
+    get() {
+        return val
+    },
+    set(newVal) {
+        val = newVal
+    }
+})
+// obj.name 等于1
+// obj.name = 2;  val = 2
+
+
+// proxy可以遍历每一个属性，而defineProperty只能对其中一个属性就行操作
+let agent = new Proxy(star, {
+    get: function (target, key) {
+        if (key === 'phone') {
+            //返回经纪人自己的手机号
+            return '13838383838'
+        }
+        if (key === "price") {
+            //明星不报价，经纪人报价
+            return 120000
+        }
+        return target[key]
+    },
+    set: function (target, key, val) {
+        if (key === 'customPrice') {
+            if (val < 100000) {
+                throw new Error("价格太低")
+            } else {
+                target[key] = val
+                return true
+            }
+        }
+    }
+})
+// console.log(agent.name) //zhang
+// console.log(agent.phone) // 13838383838
+// console.log(agent.age) // 25
+// console.log(agent.price) // 120000
+// proxy返回的是一个新的对象，可以通过操作返回的新的对象达到目的
+
+```
+- 当使用 defineProperty 时，我们修改原来的 obj 对象就可以触发拦截
+- 而使用 proxy，就必须修改代理对象，即 Proxy 的实例才可以触发拦截
+- 设计模式而言，proxy属于**代理模式**
 
 <br />
 

@@ -1,5 +1,23 @@
 js相关问答
 ===
+
+### 变量提升的问题
+- 函数声名和变量声名，函数提升较高，变量其次，这是js引擎执行过程中的编译阶段，编译阶段会先找到合适的作用域将其关联起来，放在作用域的顶部，示例：  
+```javascript
+console.log(typeof(foo));   //function
+function foo(){}
+var foo = 5;
+//上面相当于 function(){} -- var foo -- console.log() --- foo=5
+
+
+// 函数的提升高于变量，且不会被变量声名覆盖，但是会被变量赋值覆盖
+foo = 5;
+console.log(typeof(foo));  //number
+function foo(){}
+// function() {} -- foo=5 -- console.log()
+```
+
+
 ### typeof、instanceof  
 * typeof: 对于原始(基本)类型来说，除了null外都可以正确显示类型
     ```javascript
@@ -562,4 +580,298 @@ console.log(sum(1,2,3,4))
 
 ### attribute 和 property
 1. attribute是HTML标签上的属性，例如id,class,value等，它的值是字符串，共有三个方法: setAttribute、getAttribute、removeAttribute，所有本质上这个方法添加的属性跟写标签上的属性是一样的
-2. property是js获取DOM对象上的属性，也就是一个普通的js对象，除了属性值外，还是一些事件值，如click等，property包含attribute
+2. property是js获取DOM对象上的属性，也就是一个普通的js对象，除了属性值外，还是一些事件值，如click等，property包含attribute  
+
+
+
+
+
+
+### 设计模式----工厂模式  
+- 将```new```操作单独封装 
+- 原则：构造函数和创建者分离，符合开放封闭原则
+```javascript
+class Product {
+    constructor(name) {
+        this.name = name;
+    }
+    init() {
+        console.log('init')
+    }
+    fn1() {
+        console.log('fn1')
+    }
+    fn2() {
+        console.log('fn2')
+    }
+}
+
+class Creator {
+    create(name) {
+        return new Product(name)
+    }
+}
+
+let create = new Creator();
+let p = create.create('p')
+p.init() // init
+p.fn1() // fn1
+p.fn2() // fn2
+
+```
+### 设计模式----单例模式
+- 系统中被唯一使用的，一个类中只能有一个实例
+- 符合单一的职责原则，只实例化一个对象
+```javascript
+class LoginForm {
+    constructor() {
+        this.state = 'hide'
+    }
+    show() {
+        if (this.state === 'show') {
+            alert('已经显示了');
+            return
+        }
+        this.state = 'show'
+        console.log('登录框显示成功')
+    }
+    hide() {
+        if (this.state === 'hide') {
+            alert('已经隐藏')
+            return
+        }
+        this.state = 'hide'
+        console.log('登录框隐藏成功')
+    }
+}
+LoginForm.getInstance = (function() {
+    let instance
+    return function() {
+        if (!instance) {
+            instance = new LoginForm()
+        }
+        return instance
+    }
+})()
+
+let login1 = LoginForm.getInstance()
+login1.show()
+
+let login2 = LoginForm.getInstance()
+//lgoin2.show() //登录框已经显示 会执行alert
+login2.hide()
+console.log(login1 === login2) // true
+```  
+
+
+### 设计模式----装饰器模式
+- 将现有对象和装饰器进行分离，两者独立存在
+- 向对象添加新的功能，并且不改变对象的结构模式
+```javascript
+// 装饰器的原理
+@decorator
+class A {}
+
+//等同于
+class A{}
+A = decorator(A)||A;
+
+// 实例
+function testDec(isDec){
+    return function(target){
+        target.isDec = isDec;
+    }
+}
+
+@testDec(true)
+
+class Demo{
+    //....
+}
+alert(Demo.isDec) //true
+
+
+// 常用的connect
+@connect()
+class Demo extends Component{
+    // .....
+}
+
+// 相当于
+Demo = connect()(Demo) // 这样就和原始写法一样了
+
+``` 
+### 设计模式----代理模式
+- 使用者无权访问目标对象
+- 中间加代理，通过代理做授权和控制
+```javascript
+//明星
+let star = {
+    name: "zhangxx",
+    age: 25,
+    phone: '13910733521',
+}
+
+//经纪人
+let agent = new Proxy(star, {
+    get: function(target, key) {
+        if (key === 'phone') {
+            //返回经纪人自己的手机号
+            return '13838383838'
+        }
+        if (key === "price") {
+            //明星不报价，经纪人报价
+            return 120000
+        }
+        return target[key]
+    },
+    set: function(target, key, val) {
+        if (key === 'customPrice') {
+            if (val < 100000) {
+                throw new Error("价格太低")
+            } else {
+                target[key] = val
+                return true
+            }
+        }
+    }
+})
+
+console.log(agent.name) // zhangxx
+console.log(agent.phone) // 13838383838
+console.log(agent.age) // 25
+console.log(agent.price) // 120000
+
+agent.customPrice = 150000;
+console.log('agent.customPrice', agent.customPrice) // 150000
+// 明星经纪人就是其中的代理，隔离的使用者和明星
+
+```
+### 设计模式----观察者模式（前端设计最重要的一种模式）
+- 发布 & 订阅
+- 一对多（N）
+- 主题和观察者分离，不是主动触发而是被动监听，两者解耦
+- Observer和Subject
+```javascript
+//保存状态，状态变化之后触发所有观察者
+class Subject {
+    constructor() {
+        this.state = 0
+        this.observers = []
+    }
+    getState() {
+        return this.state
+    }
+    setState(state) {
+        this.state = state
+        this.notifyAllObervers()
+    }
+    notifyAllObervers() {
+        this.observers.forEach(observer => {
+            observer.update()
+        })
+    }
+    attach(observer) {
+        this.observers.push(observer)
+    }
+}
+
+//观察者
+class Observer {
+    constructor(name, subject) {
+        this.name = name
+        this.subject = subject
+        this.subject.attach(this)
+        // 这个this指向Observer {name: 'o1', subject: subject对象[state, observers]}
+    }
+    update() {
+        console.log(`${this.name} update,state:${this.subject.getState()}`)
+    }
+}
+
+let subject = new Subject();
+let obs1 = new Observer('o1', subject);
+let obs2 = new Observer('o2', subject);
+let obs3 = new Observer('o3', subject);
+// 没new一次，都会将这个subject实例push到observers数组里面， new过程3次，observers.length = 3
+
+subject.setState(1)
+subject.setState(2)
+// 当调用setState的时候，数据遍历三次，打印三次
+// 第二次调用继续打印三次，只是state的值不一样
+
+```
+### import、require、export、module.exports
+1. require是Commonjs的部分，是运行时调用的， 从本质上看：require是赋值的过程
+2. import是ES6的新规范，编译时跳用，所以要放在页面的开头处， 从本质上看：import是解构的过程，但是需要将ES6转换为ES5才能在浏览器中正常的执行
+```javascript
+// 写法上 require/exports
+var a = require('a')
+exports.a = a;
+module.exports = a;
+
+// import/export
+import a from 'a'
+export default a;
+export const a = 1;
+```  
+
+
+
+### 常见算法
+1. 去重
+    - es6 ```Array.from(new Set([...arr]))``` 或者 ```[...new set(arr)]```,
+    - 循环+json发
+    ```javascript
+        function deal(arr = []) {
+            let obj = {};
+            for(let n=0; n < arr.length; n++) {
+                obj[arr[n]] = true
+            }
+            return Object.keys(obj)
+        }
+    ```
+    - 双for循环
+    ```javascript
+        function deal(arr = []) {
+            for(let n=0; n < arr.length; n++) {
+                for(let m=n + 1; m<arr.length; m++) {
+                    if(arr[n] === arr[m]) {
+                        arr.splice(m,1);
+                        m--;
+                    }
+                }
+            }
+            return arr
+        }
+    ```
+    - 包含去除法
+    ```javascript
+        function deal(arr = []) {
+            if (!Array.isArray(arr)) {
+                console.log('type error!')
+                return
+            }
+            let temp = [];
+            for(let n=0; n < arr.length; n++) {
+                if(temp.indexOf(arr[n]) === -1) { // !temp.includes(arr[n])
+                    temp.push(arr[n])
+                }
+            }
+            return temp
+        }
+    ```
+    - reduce方法
+    ```javascript
+        function deal(arr = []) {
+            if (!Array.isArray(arr)) {
+                console.log('type error!')
+                return
+            }
+            temp = arr.reduce( (accumulator, currentValue, currentIndex, array) => {
+                console.log(accumulator)
+                return accumulator.includes(currentValue) ? accumulator : accumulator.concat(currentValue)
+            }, [])
+            return temp
+        }
+    ```
