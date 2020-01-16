@@ -234,6 +234,51 @@ setState的更新流程如下图：
 4. 如果当前事务正在更新过程中，则使用enqueueUpdate将当前组件放在dirtyComponents里，如果当前不在更新过程的话，则执行更新事务。
 5. transaction对象暴露了一个perform的方法，用来执行anyMethod，在anyMethod执行的前，需要先执行所有wrapper的initialize方法，在执行完后，要执行所有wrapper的close方法。
 
+### react中setState更新机制，什么时候同步还是异步
+1. 在react中，如果是由react引发的事件处理（比如onclick）调用setState不会同步更新this.state，除此之外调用setState会同步this.state，所谓了“除此之外”，指的是绕过react，通过addEventListener直接添加的事件处理函数，还有通过setTimeout/setInterval产生的异步调用。
+> **原因：**在React的setState函数实现中，会根据一个变量isBatchingUpdates判断是直接更新this.state还是放到队列中回头再说，而isBatchingUpdates默认是false，也就表示setState会同步更新this.state，但是，有一个函数batchedUpdates，这个函数会把isBatchingUpdates修改为true，而当React在调用事件处理函数之前就会调用这个batchedUpdates，造成的后果，就是由React控制的事件处理过程setState不会同步更新this.state。
+2. 看一个示例明白一下：
+```javascript
+class Seet extends Component {
+  constructor() {
+    super();
+    this.state = {
+      val: 0
+    };
+  }
+  componentDidMount() {
+    this.setState({val: this.state.val + 1});
+    console.log(this.state.val);    // 第 1 次 log
+
+    this.setState({val: this.state.val + 1});
+    console.log(this.state.val);    // 第 2 次 log
+
+    // setTimeout(() => {
+    //   this.setState({val: this.state.val + 1});
+    //   console.log(this.state.val);  // 第 3 次 log
+
+    //   this.setState({val: this.state.val + 1});
+    //   console.log(this.state.val);  // 第 4 次 log
+    // }, 0);
+  }
+  
+  handle = () => {
+    console.log(this.state.val)
+  }
+  render() {
+    return (
+      <div>
+        <button onClick={this.handle}>按钮</button>
+      </div>
+    )
+  }
+}
+// 1. 第一次和第二次都是在 react 自身生命周期内，触发时 isBatchingUpdates 为 true，所以并不会直接执行更新 state，而是加入了 dirtyComponents，所以打印时获取的都是更新前的状态 0，也就是第一次，第二次为0。当在点击按钮时显示的是1，因为此时已经异步更新完毕了
+
+// 2. 放开setTimeout这段代码时，由于不在react自身的事件处理中，所以isBatchingUpdates为false，可以同步更新this.state，所以第三次log为2，第四次的为3
+```
+
+
 
 ### ssr(sever slide rendering)  
 1. 即服务端渲染，可以优化首屏的加载速度，优化搜索引擎爬虫爬取页面  

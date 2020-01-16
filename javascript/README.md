@@ -18,7 +18,7 @@ function foo(){}
 ```
 
 
-### typeof、instanceof  
+### typeof、instanceof、Object.prototype.toString.call()  
 * typeof: 对于原始(基本)类型来说，除了null外都可以正确显示类型
     ```javascript
         1 // number
@@ -43,6 +43,17 @@ function foo(){}
         str1 instanceof String // true
         //注： 对于原始类型来说，你想直接通过 instanceof来判断类型是不行的
     ```
+* Object.prototype.toString.call()，每一个继承Object的对象都有toString()方法，会返回[Object type]，那么这个type就是对象的类型，但是除了Object类型的对象除外，其他类型直接使用toString方法会直接返回字符串，所以需要使用call或者apply来改变toString方法的执行上下文，这种方法所有基本类型都可以判断，即使是null和undefined
+    ```javascript
+        Object.prototype.toString.call('An') // "[object String]"
+        Object.prototype.toString.call(1) // "[object Number]"
+        Object.prototype.toString.call(Symbol(1)) // "[object Symbol]"
+        Object.prototype.toString.call(null) // "[object Null]"
+        Object.prototype.toString.call(undefined) // "[object Undefined]"
+        Object.prototype.toString.call(function(){}) // "[object Function]"
+        Object.prototype.toString.call({name: 'An'}) // "[object Object]"
+    ```
+
 
 ### 类型转换  
 1. 转换为boolean
@@ -248,15 +259,25 @@ Function.prototype.myApply = function (context) {
     - 按需加载 code spliting
     - tree shaking
 
-### Common JS、AMD、CMD、UMD的区别
-- Common js是服务端模块的规范，NodeJS采用了这个规范，规范规定一个单独的文件就是一个模块，加载模块需要使用require方法，返回内部exports对象。
+### Common JS、AMD、CMD、UMD、ES6的区别
+- Commonjs是服务端模块的规范，NodeJS采用了这个规范，规范规定一个单独的文件就是一个模块，加载模块需要使用require方法，返回内部exports对象。
     + 其次CommonJS加载模块是同步了，只有加载完成才能执行后面的操作，但是浏览器环境要从服务器上加载模块，必须采用异步模式，所以就有了AMD CMD  
+    + 机制：通过require去引用文件，会将文件执行一遍后，将其结果通过浅克隆的方式，写入全局内存，属于同步加载  
+    > exports实际上是一个对module.exports的引用，但注意不能给exports赋值，否则会断开与modules.exports的链接  
+    ```javascript
+    exports.add = function add () {/* 方法 */}
+    // 等同于
+    module.exports.add = function add () {/* 方法 */}
+    ```
 - AMD，使用时需要针对js采用对应的函数库也就是requireJS，主要解决的问题包括：
     + 多个js文件可能有依赖的关系，被依赖的文件需要早于依赖它的文件加载到浏览器中  
     + js加载的时候浏览器会停止页面渲染，加载文件越多，页面失去响应时间越长  
+    + 机制：通过require加载时，它会先加载对应的依赖，等依赖资源加载完之后，会执行回调函数，将依赖作为入参，执行对应的业务逻辑。最大的特点也就是依赖前置，属于异步加载
 - CMD，同AMD一样，需要seaJS来运行，同AMD的区别是CMD推崇就近依赖，只在用到某个模块的时候在取require，而AMD推崇依赖前置，在定义模块的时候就要声明其依赖的模块  
-- UMD，是AMD和CommonJS的组合  
-
+    + 机制同AMD，区别在于CMD强调延迟加载
+- UMD，是AMD和CommonJS的组合，主要解决上面三种加载模块的方法同时有的兼容性问题  
+- ES6，使用import和export，import会在js引擎静态分析，在编译时引入代码模块，并非在代码运行时加载
+    + 机制：加载时并不会先去与加载整个脚本，而是生成一个只读引用，并且静态解析依赖，等到执行代码时，再去依赖里取出实际需要的模块
 
 ### 从url输入到显示页面的步骤
 0. 输入完url后先先检查是否有缓存，如果命中缓存，则直接从缓存中读取资源  
@@ -294,6 +315,16 @@ Function.prototype.myApply = function (context) {
     - 在布局render树的时候涉及到两个概念回流reflow和重绘repaint
     > reflow: 计算dom的位置及大小  
     > repaint: 计算字体、颜色等过程  
+
+
+> 补充https加密的握手过程
+> 1. 客户端发送加密请求
+> 2. 服务器收到请求后，确认加密协议版本是否一致，一致则返回服务器证书，否则关闭加密通信
+> 3. 客户端收到服务器证书后，验证证书是否有效，如果失效，则会给访问者一个警示，由其决定是否继续链接，如果没有失效，则使用证书中的公匙加密一个随机数（pre-master key）返给服务器，同时返回客户端握手结束通知
+> 4. 服务器收到客户端发来的pre-master key后，计算生成本次会话的“会话密匙”，向客户端发送服务器握手结束通知  
+> 5. 至此，整个握手结束，接下来客户端和服务器端进入加密通信
+
+
 
 
 ### 为什呢操作DOM会慢
@@ -385,6 +416,11 @@ same-site | 规定浏览器不能在跨域中携带cookie，减少CRSF攻击 |
     > 协商缓存：http通过```Last-Modified/If-Modified-Since``` 和 ```Etag/If-None-Match```  
         - 前者是根据时间来判断资源是否需要更新，但是也会限于时间的因素才会有Etag的出现  
         - 后者Etag是资源的唯一标识符，一旦资源被修改值就改变  
+
+
+![stroge](img/stroge.jpg)  
+> 强制缓存优先协商缓存，若Expires/Cache-control生效则直接使用缓存，若不生效则进行协商缓存Last-Modified/If-Modified-Since和Etag/If-None
+![progress](img/stroge_progress.jpg)
 
 ### websocket
 由于http存在的弊端（消息只能由客户端推送到服务器端，而服务器端不能主动推送到客户端），导致如果服务器如果由连续的变化，这时只能使用轮询，而轮询效率过低，于是就有了websocket。  
@@ -874,4 +910,18 @@ export const a = 1;
             }, [])
             return temp
         }
-    ```
+    ```  
+
+
+    ### http2的多路复用优点
+    1. http2采用的是**二进制传输格式**，取代了http1的**文本格式**，二进制格式解析更高效，多路复用代替了http1的序列和阻塞机制，所有相同域名请求都通过同一个TCP链接并发完成，而在http1中并发多个请求需要多个TCP链接，而```keep-alive```的开启，也只是解决了多次链接的问题，但依然有效率的问题，还是需要遵循一问一答的形式，也就是必须等上一个请求接受才能发起下一个请求，所以会受到前面的阻塞，在http2这个一问一答的形式就不存在了，首先http2中两个重要的概念就是帧frame和流stream，帧代表最小的数据单位，多个帧组成流，所以```多路复用```解决了http1中的阻塞问题，具体来说就是http2的传输是基于二进制帧的。每一个TCP连接中承载了多个双向流通的流，每一个流都有一个独一无二的标识和优先级，而流就是由二进制帧组成的。二进制帧的头部信息会标识自己属于哪一个流，所以这些帧是可以交错传输，然后在接收端通过帧头的信息组装成完整的数据。这样就解决了线头阻塞的问题，同时也提高了网络速度的利用率。
+
+
+    ### 简述npm install的过程  
+    1. 发出install指令
+    2. 查询node_modules目录之中是否存在指定模块
+        - 存在，不在重新安装
+        - 不存在
+            - npm向registry查询模块压缩包的网址
+            - 下载压缩包，存放在根目录下的.npm目录里
+            - 解压压缩包到当前的node_modules目录里
