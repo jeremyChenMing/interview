@@ -137,6 +137,128 @@ Object.prototype.__proto__ // null 顶层
 ![object](img/object.png)  
 <br />
 
+
+## 对象（源自js高级程序设计第三版）
+1. 属性：包括数据属性和访问属性
+    - 数据属性：包含四个描述
+        * [[configurable]]：否可以进行delete操作
+        * [[enumerable]]：是否可以进行枚举for in
+        * [[writable]]：是否可以进行更改
+        * [[value]]：反应属性的值
+    > 通过Object.defineProperty(对象，属性，描述对象)操作  
+    ```javascript
+        var person = {};
+        Object.defineProperty(person, 'name', {
+            configurable: true,
+            enumerable: true,
+            writable: false,
+            value: 'jeremy'
+        })
+        person.name = '123'
+        console.log(person) // jeremy
+        // 注意：configurable一旦设置为false，将不会在被更改回来
+    ```
+    - 访问属性：包含四个描述
+        * [[configurable]]：否可以进行delete操作
+        * [[enumerable]]：是否可以进行枚举for in
+        * [[Get]]：读取数据时调用的函数，默认返回undefined
+        * [[Set]]：设置数据时调用的函数，默认返回undefined
+         ```javascript
+            var person = {
+                _name: 'jeremy'
+            };
+            Object.defineProperty(person, 'name', {
+                get: function (val) {
+                    return this._name
+                },
+                set: function (val) {
+                    this._name = val
+                }
+            })
+            person.name = 'old'
+            console.log(person.name) // old
+            // 如果想要重新get，set方法，可以通过如下
+            person.__defindGetter__('name', function() {
+                return this._name
+            })
+            person.__defindSetter__('name', function() {
+                this._name = val
+            })
+        ```
+    - 定义多个属性Object.defineProperties
+    ```javascript
+        Object.defineProperties(person, {
+            name: {
+                writable: true,
+                value: 2004
+            },
+            value: {
+                get: function (val) {
+                    return this._name
+                },
+                set: function (val) {
+                    this._name = val
+                }
+            }
+        })
+    ```
+    - 获取属性的描述符Object.getOwnPropertyDescriptor()，返回一个对象
+    ```javascript
+        // 对于-数据属性-得到：configurable, enumerable, writable, value
+        // 对于-访问器属性-得到：configurable, enumerable, get, set
+        var person = {};
+        Object.defineProperties(person, {
+            name: {
+                writable: true,
+                value: 2004
+            },
+            value: {
+                get: function (val) {
+                    return this._name
+                },
+                set: function (val) {
+                    this._name = val
+                }
+            }
+        })
+        var descriptor=Object.getOwnPropertyDescriptor(person, 'name') 
+    ```
+
+
+
+## 创建对象的几种模式（源自js高级程序设计第三版）
+1. 创建方式：工厂模式、构造函数模式、原型模式、构造函数+原型模式、动态原型模式、寄生构造函数模式、稳妥构造函数模式
+    - 工厂模式
+    - 构造函数模式
+    - 原型模式
+    - 构造函数+原型模式
+    - 动态原型模式
+    - 寄生构造函数模式
+    - 稳妥构造函数模式
+
+
+## 继承的几种方式（源自js高级程序设计第三版）
+1. 方式：原型链、借助构造函数、组合继承、原型式继承、寄生式继承、寄生组合式继承、
+    - 原型链
+    - 借助构造函数
+    - 组合继承
+    - 原型式继承
+    - 寄生式继承
+    - 寄生组合式继承
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ### 什么是闭包，作用域链？  
 >闭包是指有权访问另一个函数作用域中的变量的函数,创建闭包的最常见的方式就是在一个函数内创建另一个函数,通过另一个函数访问这个函数的局部变量。  
 > 组成部分包含两部分：1）上下文环境A，2）在A中创建函数B 。我们调用B的时候能够访问到A中的变量，这就形成了闭包  
