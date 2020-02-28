@@ -7,14 +7,14 @@ js相关问答
 console.log(typeof(foo));   //function
 function foo(){}
 var foo = 5;
-//上面相当于 function(){} -- var foo -- console.log() --- foo=5
+//上面相当于 function foo(){} -- var foo -- console.log() --- foo=5
 
 
 // 函数的提升高于变量，且不会被变量声名覆盖，但是会被变量赋值覆盖
 foo = 5;
 console.log(typeof(foo));  //number
 function foo(){}
-// function() {} -- foo=5 -- console.log()
+// function foo() {} -- foo=5 -- console.log()
 ```
 
 
@@ -30,7 +30,7 @@ function foo(){}
         // 注： NaN 属于number，NaN !== NaN （true)
         // 注：对于函数而言，显示function，[],{}显示object
     ```  
-* instanceof: 判断对象的类型，因为内部的机制是通过判断对象的原型链中是不是能找到类型的prototype  
+* instanceof: 判断对象的类型，因为内部的机制是通过判断对象的原型链上是否出现过该构造函数 
     ```javascript
         const Person = function() {}
         const p1 = new Person()
@@ -228,20 +228,158 @@ Object.prototype.__proto__ // null 顶层
 
 ## 创建对象的几种模式（源自js高级程序设计第三版）
 1. 创建方式：工厂模式、构造函数模式、原型模式、构造函数+原型模式、动态原型模式、寄生构造函数模式、稳妥构造函数模式
-    - 工厂模式
-    - 构造函数模式
-    - 原型模式
-    - 构造函数+原型模式
-    - 动态原型模式
-    - 寄生构造函数模式
-    - 稳妥构造函数模式
+    - 工厂模式：最简单的函数返回模式
+    ```javascript
+        function create(name, age, friends) {
+            var obj = new Object();
+            obj.name = name
+            obj.age = age
+            obj.friends = friends
+            return obj;
+        }
+        var person = create('jeremy', 18, ['sam']);
+        // 解决了创建多个类似对象的问题，但是无法解决对象的类型
+    ```
+    - 构造函数模式：通过new 构造函数来得到一个实例
+    ```javascript
+        function Create(name, age) {
+            this.name = name
+            this.age = age
+            this.sayName = function(){}
+        }
+        var person1 = new Create('jeremy', 18);
+        var person2 = new Create('allan', 28);
+        // new的过程分为：创建一个对象，改变this指向，执行构造函数的代码，返回一个对象
+        // 问题：每个方法（sayName）都要在每个实例上重新创建一次，也就是person1.sayName == person2.sayName false
+        // 为了避免这个重复创建的问题就有了原型模式
+    ```
+    - 原型模式：prototype的好处在于可以让所有的实例共享它所包含的属性和方法
+    ```javascript
+        //理解：只要创建一个函数，就会按照一组特定的规律，为该函数提供一个prototype的属性，这个属性指向原型对象，默认情况下，所有的原型对象会自动获得一个constructor属性，该属性包含一个指向prototype属性所在函数的指针，即Person.prototype.constructor == Person  
+        //当调用构造函数创建一个实例时，该实例包含一个指针[[prototype]]，虽然无法访问，但可以通过__proto__，但要记住这个连接存在于实例和构造函数的原型对象之间
+
+        // 判断的条件isPrototypeOf() 和 Object.getPrototyoeOf()获取原型对象
+        Person.prototype.isPrototypeOf(person1) // true
+        Object.getPrototyoeOf(person1) // Person.prototype
+        Object.getPrototyoeOf(person1).name // jeremy 只能是在原型对象属性name，不是this.name
+
+        // 检测属性存在实例中还是原型中的方法 hasOwnProperty()
+        person1.hasOwnProperty('name') // 在实例中返回true，原型返回false
+        // 如果要取得原型属性的描述则用 Object.getOwnPropertyDescriptor()
+
+        // in 操作符也可以判断属性的归属问题
+        console.log(name in person1) // true 无论该属性在实例还是原型对象上只要有就返回true，因此可以通过in 和 hasOwnProperty()来确定属性到底在实例还是原型对象上
+
+
+        function Person() {}
+        Person.prototype.name = 'jeremy';
+        Person.prototype.age = 18;
+        Person.prototype.sayName = function () {
+            console.log(this.name)
+        };
+        var person = new Person();
+        console.log('name' in person) // true
+        person.name = 'allan'
+        console.log(person.hasOwnProperty('name')) // true  去掉上面的就是false
+        console.log(Object.getPrototypeOf(person).name) // jeremy
+        console.log(Object.getOwnPropertyDescriptor(person, 'name')) // {value: 'allan', writable: true, enumerable: true, configurable: true}
+        console.log(Object.getOwnPropertyDescriptor(Person.prototype, 'name')) // {value: 'jeremy', writable: true, enumerable: true, configurable: true}
+
+
+        // 问题：共享属性会带来一定的不变，针对于属性值为对象的
+        Person.prototype.friends = ['lili', 'hanmeimei'];
+        var other1 = new Person();
+        var other2 = new Person();
+        other1.friends.push('lilei');
+        console.log(other1.friends == other2.friends)
+        // 所以就有了下面的模式
+    ```
+    - 构造函数+原型模式：构造函数定义实例属性，原型模式定义共享属性和方法
+    ```javascript
+        function Person(){this.friends = ['lili']}
+        Person.prototype.countFriends = function() {console.log(this.friends.length)}
+        var other1 = new Person();
+        var other2 = new Person();
+        other1.friends.push('lilei');
+
+        other1.friends.countFriends // 2
+        other2.friends.countFriends // 1
+    ```
 
 
 ## 继承的几种方式（源自js高级程序设计第三版）
-1. 方式：原型链、借助构造函数、组合继承、原型式继承、寄生式继承、寄生组合式继承、
+1. 方式：原型链(依据)、借助构造函数、组合继承、原型式继承、寄生式继承、寄生组合式继承、
     - 原型链
-    - 借助构造函数
-    - 组合继承
+    ```javascript
+        // 利用原型让一个引用类型继承另一个引用类型的属性和方法 
+        // 通过原型链继承主要是通过将原型对象等于另一个实例 Sub.prototype = new Super();
+        // 所有的函数的默认的原型都是Object的实例，也就是所有原型链的顶端就是Object.prototype
+        function Super() {
+            this.property = true
+        }
+        Super.prototype.getSuperValue = function () {
+            return this.property
+        }
+
+        function Sub() {
+            this.property = false
+        }
+        Sub.prototype = new Super();
+
+        Sub.prototype.getSupValue = function () {
+            return this.property
+        }
+        var instance = new Sub();
+        //确定原型链的关系可以通过instanceOf(判断构造函数是否出现在原型链中)
+        console.log(instance instanceOf Object) // true
+        console.log(instance instanceOf Sub) // true
+        console.log(instance instanceOf Super) // true
+
+        // 问题：同创建对象一样，对于引用类型来说有共用的特性，例如属性之为数组时，其中一个实例进行了操作，另外一个实例的该属性也同样会改变
+        // 第二个问题，就是不能向超类型的构造函数传递参数
+    ```
+    - 借助构造函数：即在子类型构造函数的内部调用超类型构造函数
+    ```javascript
+        function Super(name) {
+            this.colors = ['red','blue']
+            this.name = name
+        }
+        function Sub() {
+            Super.call(this, 'jereky')
+        }
+        var instance = new Sub();
+        console.log(instance.colors) // ['red','blue']
+        console.log(instance.name) // jereky
+        // 相比较原型对象而言，可以像超类型构造函数传递参数
+        // 问题：方法都在构造函数中定义的话，那么复用就无从谈起
+    ```
+    - 组合继承：通过原型链和构造函数组合得到，即通过原型链实现对原型属性和方法的继承，通过构造函数实现对实例属性的继承
+    ```javascript
+        function Super(name) {
+            this.name = name
+            this.colors = ['red','blue']
+        }
+        Super.prototype.sayName = function () {
+            console.log(this.name)
+        }
+        function Sub(name, age) {
+            Super.call(this, name)
+            this.age = age
+        }
+        Sub.prototype = new Super();
+        Sub.prototype.constructor = Sub;
+
+        Sub.prototype.sayAge = function () {
+            console.log(this.age)
+        }
+        var instance1 = new Sub('jeremy', 12);
+        instance1.colors.push('1')
+        console.log(instance1.colors.length) // 3 
+
+        var instance2 = new Sub('allan', 18);
+        console.log(instance2.colors.length) // 2
+    ```
+
     - 原型式继承
     - 寄生式继承
     - 寄生组合式继承
@@ -403,7 +541,7 @@ Function.prototype.myApply = function (context) {
 
 ### 从url输入到显示页面的步骤
 0. 输入完url后先先检查是否有缓存，如果命中缓存，则直接从缓存中读取资源  
-1. DNS解析 - 找出真是的ip地址发起服务器请求  
+1. DNS解析 - 找出真实的ip地址发起服务器请求  
     - 先检查本地hosts文件是否存在域名映射，如果存在，则解析结束，返回ip
     - 如果本地没有则查找本地DNS缓存，如果存在，则解析结束，返回ip
     - 如果本地DNS缓存没有命中，则查找本地的DNS服务器，如果存在，则解析结束，返回ip
@@ -465,13 +603,13 @@ Function.prototype.myApply = function (context) {
     > 合并css、合并js、雪碧图，小图片使用base64，使用icon字体代替小图标  
     > 强缓存/协商缓存的应用
     - css放在页面顶部，使用link标签，js放在底部，压缩css和js
-    - 禁止使用iframe，因为他会阻塞onload事件，禁止使用git，降低cpu的消耗，使用css3代替动画，减少js操作dom
+    - 禁止使用iframe，因为他会阻塞onload事件，降低cpu的消耗，使用css3代替动画，减少js操作dom
     - 减少引起重绘和回流的操作
         * 使用translate代替top
         * opacity代替visibility
         * 不要使用table布局
     - 使用CDN: 因为CND缓存方便，突破浏览器的并发限制，节约cookie宽带，节约主域名的连接速度，防止不必要的安全问题，Gzip压缩  
-    - 使用http/2.0: 因为2.0版本中引入了多路复用，能够让多个请求使用同一个tcp链接，加快了网页的加载速度，并且还支持Header压缩，进一步的减少了请求的数据大小
+    - 使用http/2.0: 因为2.0版本中引入了多路复用，能够让多个请求使用同一个tcp链接，提升网页的加载速度，并且还支持Header压缩，进一步的减少了请求的数据大小
     - 图片使用懒加载技术  
 2. SEO
     - 合理的title、description、keywords，搜索对这三项的权重逐渐减小
