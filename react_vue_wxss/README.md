@@ -305,7 +305,7 @@ class Seet extends Component {
 1. 即服务端渲染，可以优化首屏的加载速度，优化搜索引擎爬虫爬取页面  
 2. 借助react的属性renderToString || renderToStaticMarkup这个API来实现，流程如下图  
 ![ssr](img/ssr.png)  
-> 区别在于前者渲染的时候带有data-reactid，而后者没有
+> 区别在于前者渲染的时候带有data-reactId，而后者没有
 
 
 
@@ -322,14 +322,71 @@ class Seet extends Component {
 ![ssr](img/redux.png)
 1. redux：如上图，用户发出action，stroe接收后并自动调用reducer，并返回新的state，state一旦发生变化就会触发监听函数，然后重新渲染view  
     - 特点：唯一的数据源、保持只读状态，数据改变只能通过纯函数来执行
+2. redux-thunk和redux-saga：用来解决异步action的
+    - 中间件的概念就是在dispatch一个action 后，到达reducer之前，进行一些额外的操作
+    ```javascript
+        // 引入中间件后就可以在action 中创建异步了，例如：
+        import { applyMiddleware, createStore } from 'redux';
+        import thunk from 'redux-thunk';
+        const store = createStore(
+            reducers,
+            applyMiddleware(thunk)
+        );
+
+        export const getTodoList = () => {
+            return () => {
+                axios.get('./list').then((res)=>{
+                    const data = res.data;
+                    const action  = initListAction(data);
+                    StorageEvent.dispatch(action);
+                })
+            }
+        }
+    ```
+    - 而redux-saga是将所有的异步操作逻辑收集在一个地方进行几种处理，这也是区别redux-thunk（分散的一个action对应一个异步操作，异步操作action返回的是一个函数，而不是同步时的对象）
+    ```javascript
+        import { createStore, applyMiddleware } from 'redux'
+        import createSagaMiddleware from 'redux-saga'
+        import reducer from './reducers'
+        import mySaga from './sagas'
+
+        const sagaMiddleware = createSagaMiddleware()
+        const store = createStore(
+            reducer,
+            applyMiddleware(sagaMiddleware)
+        )
+
+        // then run the saga
+        sagaMiddleware.run(mySaga)；
+        export default store;
+        
+        // sagas.js
+        import { call, put, takeEvery, takeLatest } from 'redux-saga/effects'
+        import Api from '...'
+
+        // worker Saga: will be fired on USER_FETCH_REQUESTED actions
+        function* fetchUser(action) {
+            try {
+                const user = yield call(Api.fetchUser, action.payload.userId);
+                yield put({type: "USER_FETCH_SUCCEEDED", user: user});
+            } catch (e) {
+                yield put({type: "USER_FETCH_FAILED", message: e.message});
+            }
+            }
+        function* mySaga() {
+            yield takeEvery("USER_FETCH_REQUESTED", fetchUser);
+        }
+
+        export default mySaga;
+    ```
 
 
 ![ssr](img/mobx.png)
 2. mobx：如上图
 
 
-#### react hooks知识  
-1. context
+#### react-router底层原理 
+本质就是监听 URL 的变化，然后匹配路由规则，显示相应的页面，并且无须刷新，分类两种方式hash和history模式；
 
 
 
