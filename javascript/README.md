@@ -506,6 +506,45 @@ Function.prototype.myApply = function (context) {
 
 <br />
 
+### 环境中this的情况  
+1. this指向window，例如：
+```javascript
+function foo() {console.log(this)}
+foo() // window
+```
+2. 谁调用指向谁
+```javascript
+var obj = {
+    a: 1,
+    b: foo
+}
+obj.foo() // obj
+```
+3. new来说
+```javascript
+var c = new foo(); // 永远被指向C，不会被改变
+```
+4. 箭头函数中的this在定义的时候就被定义了,另外对于箭头函数使用bind是无效的
+```javascript
+function a() {
+    return () => {
+        console.log(this)
+    }
+}
+a()() // window
+```
+5. bind时this指向的是第一个参数，如果第一个参数是空，就指向window，如果bind多次，只取第一次；
+```javascript
+let a = { name: 'poetries' }
+function foo() {
+  console.log(this.name)
+}
+foo.bind(a)() // => 'poetries'
+```  
+
+> new方式优先级最高，接下来是bind，下来是obj.foo这种形式，最后就是单独调用这种形式
+
+
 ### 对webpack的理解
 1. 它是一个模块加载兼打包的一个工具，他能把各种资源当作模块来加载；  
 2. 两大特色是code spliting和tree shaking  
@@ -719,7 +758,7 @@ function startWorker() {
         document.getElementById("result").innerHTML = "抱歉，你的浏览器不支持 Web Workers...";
     }
 }
- //
+ 
 function stopWorker() { 
     w.terminate();
     w = undefined;
@@ -866,7 +905,7 @@ console.log(sum(1,2,3,4))
 
 
 ### http和https
-1. http超文本传输协议，https只是多了一个s，即SSL加密，其主要作用在加密在传输层协议上，使请求更加的安全。
+1. http超文本传输协议，https只是多了一个s，即SSL加密，其主要作用加密在传输层协议上，使请求更加的安全。
     - 区别在于：后者需要ca证书，费用较高，使用的端口号也不同，http：80，https：443
     - https的缺点：握手阶段比较费时，缓存不如http高效，SSL证书也需要钱  
 2. http 2.0
@@ -1089,7 +1128,7 @@ let subject = new Subject();
 let obs1 = new Observer('o1', subject);
 let obs2 = new Observer('o2', subject);
 let obs3 = new Observer('o3', subject);
-// 没new一次，都会将这个subject实例push到observers数组里面， new过程3次，observers.length = 3
+// 每new一次，都会将这个subject实例push到observers数组里面， new过程3次，observers.length = 3
 
 subject.setState(1)
 subject.setState(2)
@@ -1099,7 +1138,7 @@ subject.setState(2)
 ```
 ### import、require、export、module.exports
 1. require是Commonjs的部分，是运行时调用的， 从本质上看：require是赋值的过程
-2. import是ES6的新规范，编译时跳用，所以要放在页面的开头处， 从本质上看：import是解构的过程，但是需要将ES6转换为ES5才能在浏览器中正常的执行
+2. import是ES6的新规范，编译时调用，所以要放在页面的开头处， 从本质上看：import是解构的过程，但是需要将ES6转换为ES5才能在浏览器中正常的执行
 ```javascript
 // 写法上 require/exports
 var a = require('a')

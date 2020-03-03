@@ -69,7 +69,7 @@
 <script type="text/javascript">代码区域</script>
 ```
 
-### 忘使用标签 
+### 易忘使用标签 
 1. sub：定义下表
 2. sup：定义上表
 3. ins: 插入文字（底边有横线）

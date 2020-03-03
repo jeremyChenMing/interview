@@ -7,7 +7,7 @@ Vue
     * **Compile**
         - 对每个元素节点的指令进行扫描和解析，根据指令模版替换数据，以及绑定相应的更新函数
     * **Watcher**
-        - 作为链接二者的桥梁，能够订阅并收到每个属性变动的通知，执行指令绑定相应的回调函数，从而更新试图
+        - 作为链接二者的桥梁，能够订阅并收到每个属性变动的通知，执行指令绑定相应的回调函数，从而更新视图
 
 > vue数据双向绑定的原理(_也即是Observer_)：采用数据劫持和发布/订阅者模式的方式，通过```Object.defineProperty()```来劫持各个属性的```setter```，```getter```，在数据变动时发布消息给订阅者，触发相应的监听回调用；   
 
@@ -94,7 +94,7 @@ let agent = new Proxy(star, {
 React
 ====
 ### React原理
-react采用单项数据流动， 作为一个mvc中的V（视图层），内部通过虚拟Dom进行diff运算，在更新需要更新的试图，相比较传统前端操作dom性能和体验要好很多。
+react采用单项数据流动， 作为一个mvc中的V（视图层），内部通过虚拟Dom进行diff运算，在更新需要更新的视图，相比较传统前端操作dom性能和体验要好很多。
 
 ### 受控组件与非受控组件
 1. 受控组件：每当表单的状态发生变化，都会被写入到组件的state中，这种组件就被称为受控组件。
@@ -121,8 +121,8 @@ react采用单项数据流动， 作为一个mvc中的V（视图层），内部�
 ### JSX是如何解析的
 1. JSX是react的语法糖，它将Dom看成是一个对象（标签名，属性，子元素）。通过ReactDom.render将dom树插入到页面的某个特定元素上（#root）  
 ![jsx](img/jsx.png)  
-> jsx是javascript语言的一种语法扩展
-> jsx是描述你的组件长什么样子，在编译时会编程相应的js对象描述
+> jsx是javascript语言的一种语法扩展  
+> jsx是描述你的组件长什么样子，在编译时会编程相应的js对象描述  
 > react-dom负责把这个用来描述UI 信息的 JavaScript 对象变成 DOM 元素，并且渲染到页面上  
 
 
@@ -150,8 +150,13 @@ react采用单项数据流动， 作为一个mvc中的V（视图层），内部�
 
 
 ### react的Fiber概念
-> Fiber的本质上是一个虚拟的堆栈帧，按照优先级自由调度这些帧，从而将之前的同步渲染改成了异步渲染，在不影响体验的条件下去分段计算更新  
-> Fiber的出现主要是针对react更新渲染的第一阶段，以后的更新阶段包括：  
+> 起因：16以前对virtural dom的更新是同步的，如果层级比较深，相应占用主线程的时间就长，一些用户操作就得不到相应，导致页面动画卡顿、丢帧，导致用户体验差，16以后引入fiber来解决这个问题，fiber把一个任务分成多个小片，当分给小片的时间用尽后，就检查任务列表中优先级更高的任务去执行，也就是异步渲染。  
+
+> Fiber就是通过对象记录组件上的需要做和已经完成的更新，一个组件可以对应多个fiber，在render函数中创建的React Element树在第一次渲染的时候会创建一颗结构一模一样的Fiber节点树。不同的React Element类型对应不同的Fiber节点类型。一个React Element的工作就由它对应的Fiber节点来负责  
+
+> 一个React Element可以对应不止一个Fiber，因为Fiber在update的时候，会从原来的Fiber（我们称为current）clone出一个新的Fiber（我们称为alternate）。两个Fiber diff出的变化（side effect）记录在alternate上。所以一个组件在更新时最多会有两个Fiber与其对应，在更新结束后alternate会取代之前的current的成为新的current节点。  
+
+> Fiber的出现主要是针对react更新渲染的第一阶段，更新阶段包括：  
     * ```reconcilier:``` 虚拟dom进行diff算法的对比，一旦进行就无法中断，如果有大量的计算就会一直占用主线程，导致交互和动画的卡顿现象  
     * ```commit:``` 把diff算法的结果element放到任务队列里，然后更新dom  
 ```javascript
@@ -160,6 +165,8 @@ componentWillMount
 componentWillReceiveProps
 shouldComponentUpdate
 componentWillUpdate
+
+> 为什么会多次执行这个will的生命周期呢？在异步渲染的时候，会调用requestIdelCallback API，在回掉函数中可以获得当前的callback参数（分片任务）还能执行多久，如果时间不够，分片任务会打算，下次就只能空闲时重新执行
 
 2) Commit
 componentDidMount
@@ -170,6 +177,18 @@ componentWillUnmount
 // getDerivedStateFromProps 代替了 componentWillReceiveProps, 会在初始化和update时调用  
 // getSnapshotBeforeUpdate 代替了 componentWillUpdate, 会在update后，dom更新前调用
 ```
+
+### react的diff算法
+1. 就是对比两个virtural Dom（fiber子节点树），首先进行的是统计比较，不同类的直接替换，根据keys判断列表dom是删除还是添加，从而减少对比的复杂度。
+2. 策略：减少了diff算法的复杂度
+    - tree diff
+    > webui中dom节点的跨层级移动操作少的可以忽略不计，react只会比较同级别的dom，当出现跨层级也不会进行跨层级比较，依然比较同级的dom，没有则删除，有则添加
+    - component diff
+    > 1)如果是同一类型组件，按照原策略进行虚拟dom比较；2）不同类组件则直接进行替换；3）如果是同一个类型的组件，有可能经过一轮virtural dom比较后，并没有改变，如果我们可以提前知道这一点就可以省去不必要的diff时间，因此，react允许用户通过shouldComponentUpdate生命周期来判断是否需要进行diff分析；
+    - element diff  
+    > 当节点属于同一层级时，diff提供三种操作，分别是插入、移动、删除（即keys的重要性）
+
+
 ### react通信方式有哪些  
 - 父子通信
     + 父传子用props，子传父调用父给子的方法  
@@ -223,7 +242,7 @@ componentWillUnmount
 
 
 ### react中的isBatchingUpdates、Transaction
-这两个概念主要是处在setState中，也是react更细DOM最终要的一环，setState最终是通过enqueueUpdate执行state更新的，  
+这两个概念主要是处在setState中，也是react更细DOM最重要的一环，setState最终是通过enqueueUpdate执行state更新的，  
 - isBatchingUpdates：标志者react是否处在一个批量更新的状态，其值是一个布尔值。
 - Transaction：事务，类似react终的一个中间件，保证数据的一致性。  
 setState的更新流程如下图：
@@ -233,6 +252,8 @@ setState的更新流程如下图：
 3. 是否处于批量创建/更新组件的过程（```batchingStrategy.isBatchingUpdates```）,如果=false,则处理调用```batchingStrategy.batchedUpdates```去执行 update state事务，如果=true,则将当前的组件放在dirtyComponents数组中，所以不是每一次的setState都会更新组件。
 4. 如果当前事务正在更新过程中，则使用enqueueUpdate将当前组件放在dirtyComponents里，如果当前不在更新过程的话，则执行更新事务。
 5. transaction对象暴露了一个perform的方法，用来执行anyMethod，在anyMethod执行的前，需要先执行所有wrapper的initialize方法，在执行完后，要执行所有wrapper的close方法。
+
+
 
 ### react中setState更新机制，什么时候同步还是异步
 1. 在react中，如果是由react引发的事件处理（比如onclick）调用setState不会同步更新this.state，除此之外调用setState会同步this.state，所谓了“除此之外”，指的是绕过react，通过addEventListener直接添加的事件处理函数，还有通过setTimeout/setInterval产生的异步调用。
@@ -294,6 +315,21 @@ class Seet extends Component {
 - 如果只是浅比较，可以使用pureComponent，或者hook函数中的react.mome()  
 - 使用production版本的react.js  
 - 使用key来帮助react识别列表中自组件的最小变化，不建议使用index，因为每次index会变
+
+
+### redux和mobx
+> 区别：mobx入手简单于redux，大型项目优选redux，简单考虑mobx（鉴于代码量的关系），其次是redux更多的是遵循函数式编程（如reducer），mobx更多是基于面向对象 
+![ssr](img/redux.png)
+1. redux：如上图，用户发出action，stroe接收后并自动调用reducer，并返回新的state，state一旦发生变化就会触发监听函数，然后重新渲染view  
+    - 特点：唯一的数据源、保持只读状态，数据改变只能通过纯函数来执行
+
+
+![ssr](img/mobx.png)
+2. mobx：如上图
+
+
+#### react hooks知识  
+1. context
 
 
 
