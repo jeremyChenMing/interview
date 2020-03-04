@@ -1,7 +1,7 @@
 Vue
 ====
 ### vue原理  
-1. **原理**：它是一个精简的MVVM框架，通过双向数据绑定链接View和Model层，视图层的变动自动反应在Model上，反之亦然。而实现这这个方式，需要三个模块的支持：  
+1. **原理**：它是一个精简的MVVM框架，通过双向数据绑定链接View和Model层，视图层的变动自动反应在Model上，反之亦然。而实现此方式，需要三个模块的支持：  
     * **Observer**
         - 能够对数据对象进行监听，如有变动，拿到最新值通知订阅者
     * **Compile**
@@ -104,7 +104,7 @@ react采用单项数据流动， 作为一个mvc中的V（视图层），内部�
 
 ### 虚拟DOM，为什么能提高性能  
 - 虚拟dom是react使用js实现了一套dom结构
-- 首先操作真是DOM的耗费的性能代价太大，而js操作对象会很快，而虚拟dom是js和真是dom中间加了一个缓存，通过diff算法，找出变化的dom节点，然后在更新真实的dom，从而提高性能  
+- 首先操作真是DOM的耗费的性能代价太大，而js操作对象会很快，而虚拟dom是js和真实dom中间加了一个缓存，通过diff算法，找出变化的dom节点，然后在更新真实的dom，从而提高性能  
 - diff算法经过两个阶段：
     + diff: 计算虚拟DOM树转换为真实DOM树
     + patch: 将差异更新到真实的DOM节点
@@ -150,7 +150,7 @@ react采用单项数据流动， 作为一个mvc中的V（视图层），内部�
 
 
 ### react的Fiber概念
-> 起因：16以前对virtural dom的更新是同步的，如果层级比较深，相应占用主线程的时间就长，一些用户操作就得不到相应，导致页面动画卡顿、丢帧，导致用户体验差，16以后引入fiber来解决这个问题，fiber把一个任务分成多个小片，当分给小片的时间用尽后，就检查任务列表中优先级更高的任务去执行，也就是异步渲染。  
+> 起因：16以前对virtural dom的更新是同步的，如果层级比较深，相应占用主线程的时间就长，一些用户操作就得不到回应，导致页面动画卡顿、丢帧，导致用户体验差，16以后引入fiber来解决这个问题，fiber把一个任务分成多个小片，当分给小片的时间用尽后，就检查任务列表中优先级更高的任务去执行，也就是异步渲染。  
 
 > Fiber就是通过对象记录组件上的需要做和已经完成的更新，一个组件可以对应多个fiber，在render函数中创建的React Element树在第一次渲染的时候会创建一颗结构一模一样的Fiber节点树。不同的React Element类型对应不同的Fiber节点类型。一个React Element的工作就由它对应的Fiber节点来负责  
 
@@ -179,7 +179,7 @@ componentWillUnmount
 ```
 
 ### react的diff算法
-1. 就是对比两个virtural Dom（fiber子节点树），首先进行的是统计比较，不同类的直接替换，根据keys判断列表dom是删除还是添加，从而减少对比的复杂度。
+1. 就是对比两个virtural Dom（fiber子节点树），首先进行的是统一比较，不同类的直接替换，根据keys判断列表dom是删除还是添加，从而减少对比的复杂度。
 2. 策略：减少了diff算法的复杂度
     - tree diff
     > webui中dom节点的跨层级移动操作少的可以忽略不计，react只会比较同级别的dom，当出现跨层级也不会进行跨层级比较，依然比较同级的dom，没有则删除，有则添加
@@ -242,8 +242,8 @@ componentWillUnmount
 
 
 ### react中的isBatchingUpdates、Transaction
-这两个概念主要是处在setState中，也是react更细DOM最重要的一环，setState最终是通过enqueueUpdate执行state更新的，  
-- isBatchingUpdates：标志者react是否处在一个批量更新的状态，其值是一个布尔值。
+这两个概念主要是处在setState中，也是react更新DOM最重要的一环，setState最终是通过enqueueUpdate执行state更新的，  
+- isBatchingUpdates：表示react是否处在一个批量更新的状态，其值是一个布尔值。
 - Transaction：事务，类似react终的一个中间件，保证数据的一致性。  
 setState的更新流程如下图：
 ![progress](img/progress.jpeg)  
