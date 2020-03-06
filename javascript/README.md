@@ -389,10 +389,27 @@ Object.prototype.__proto__ // null 顶层
 
 
 
-
-
-
-
+### addEventListener 事件绑定
+1. 用于向指定元素添加事件句柄，常见应用方式：
+```javascript
+var x = document.getElementById("myBtn");
+if (x.addEventListener) {                    //所有主流浏览器，除了 IE 8 及更早 IE版本
+    x.addEventListener("click", myFunction);
+} else if (x.attachEvent) {                  // IE 8 及更早 IE 版本
+    x.attachEvent("onclick", myFunction);
+}
+// 解除事件绑定removeEventListener detachEvent
+// 第三个参数boolean 默认false，事件发生在冒泡阶段，true为捕获阶段
+```
+2. 当第三那个参数为对象useCapture
+```javascript
+// 三个参数默认都为false
+addEventListener(type, listener, {
+    capture: false, // 就等于以前boolean
+    passive: false, // 如果事件里面出现了preventDefault，passive=true可以保证无效
+    once: false // 表明该监听器是一次性的，执行一次后就被自动 removeEventListener
+})
+```
 
 
 
@@ -577,6 +594,34 @@ foo.bind(a)() // => 'poetries'
 - UMD，是AMD和CommonJS的组合，主要解决上面三种加载模块的方法同时有的兼容性问题  
 - ES6，使用import和export，import会在js引擎静态分析，在编译时引入代码模块，并非在代码运行时加载
     + 机制：加载时并不会先去与加载整个脚本，而是生成一个只读引用，并且静态解析依赖，等到执行代码时，再去依赖里取出实际需要的模块
+
+### require和import对比 
+1. require是commonJs,特点是：  
+    - 所有代码块运行在模块作用域不会污染全局
+    - 模块可以多次加载，但是只会在第一次加载时运行一次，然后运行结果就被缓存了，以后再加载，就直接读取缓存结果。要想让模块再次运行，必须清除缓存。
+    - 模块加载的顺序，按照其在代码中出现的顺序
+
+2. import是ES6，设计思想是尽量静态化，使得编译时就能确定模块的依赖关系，以及输入和输出变量
+    - import命令输入的变量是只读的，并且具有提升效果
+    - import是静态执行，所以不能使用表达式和变量
+    - 如果重复执行多次，那么也只会执行一次
+3. 区别：CommonJs模块输出的是一个值的拷贝，ES6模块输出的是一个值的引用，CommonJs 模块是运行时加载，ES6模块是编译时加载
+4. 对比模块加载
+```javascript
+// CommonJS模块
+let { stat, exists, readFile } = require('fs');
+
+// 等同于
+let _fs = require('fs');
+let stat = _fs.stat;
+let exists = _fs.exists;
+let readfile = _fs.readfile;
+// 上面的实质是先加载整个模块生成对象_fs,然后在从对象上加载三个方法，这称为“运行时加载”
+
+// ES6模块
+import { stat, exists, readFile } from 'fs';
+// 上面实质是从fs里面加载三个方法，其他不加载，这称为“编译时加载”
+```
 
 ### 从url输入到显示页面的步骤
 0. 输入完url后先先检查是否有缓存，如果命中缓存，则直接从缓存中读取资源  
@@ -1295,3 +1340,48 @@ const codeMessage = {
         return objClone;
     }
     ```
+
+### PWA技术、SPA技术、Fluter、RN
+1. PWA：progressive web app渐进式web应用，运用现代的 Web API 以及传统的渐进式增强策略来创建跨平台 Web 应用程序。这些应用无处不在、功能丰富，使其具有与原生应用相同的用户体验优势。一个pwa应用首先通过web技术实现一个网页应用，然后添加App Mainifest和Service Worker来实现PWA的安装和离线等功能。
+    - 无需下载，用完即走的特点，并且轻量lite。
+    - 首先在页面头部添加minifest.json来配置```<link rel="manifest" href="manifest.json" />```配置可[参考](https://developer.mozilla.org/zh-CN/docs/Web/Manifest)  
+    - service worker离线存储，给 web 应用提供高级的可持续的后台处理能力；它就就像是服务器和网页之间的拦截器，能够拦截http请求，从而完全控制网站。特点如下：
+        + 在页面中注册成功后，运行浏览器的后台，不受页面刷新的影响，可以监听和拦截所有的请求
+        + 网站必须使用https协议。除了使用本地开发环境调试时(如域名使用 localhost)
+        + 不能操作dom，但是可以通过事件机制来处理 
+
+    - 问题：支持率不够高，例如IE，ios手机端 
+
+2. SPA 单页面应用
+    - 是一种特殊的 Web 应用，是加载单个 HTML 页面并在用户与应用程序交互时动态更新html
+    - 优点：
+        + 良好的交互体验，不会频繁的跳转页面
+        + 前后端分离，后端返回数据而不是html
+        + 减少服务器的压力
+    - 缺点：
+        + SEO难度较高
+        + 初次加载耗时较多
+    - 优化：
+        + 加载优化，执行按需加载
+        + 增加缓存机制，加快访问速度
+        + 转场动画，提高用户体验 
+
+3. fluter
+    - 开发语言dart,风格类似C++,java
+    - ui为自己实现的，所以兼容性和性能上高于rn
+    - 出现时间晚于rn，所以生态不太完善
+4. RN
+    - 开发语言react,风格类似js,css
+    - 利用js做桥接调用底层平台代码，会存在兼容性的问题
+    - 出现时间较早，所以平台大，第三方库较多
+
+
+
+### 发布订阅者模式的理解以及实现emiter的方式  
+1. 有名观察者模式，它定义了对象一种一对多的关系，让多个观察者对象同时监听某一个主题对象，当一个对象发生改变，所有依赖的对象都将得到通知。
+
+
+2. 实现：[简单实现](https://github.com/jeremyChenMing/interview/blob/master/javascript/example/js/push_subscribe.js)
+    - 首先创建发布者
+    - 给发布者添加一个缓存列表，用于存放函数来通知订阅者
+    - 最后就是发布消息，发布者遍历这个缓存列表，依次触发里面存放的订阅者回调函数
