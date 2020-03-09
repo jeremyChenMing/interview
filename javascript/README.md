@@ -872,7 +872,9 @@ const throttle = (func, wait = 50) => {
 > 测试用例在example中的[debounce_throttle.js](https://github.com/jeremyChenMing/interview/tree/master/js/example/js)
 
 ### 柯里化函数的实现
-定义：把接受多个参数的函数换成接受一个单一参数的函数，并返回接受余下参数而返回结果的新函数的技术  
+1. 定义：把接受多个参数的函数换成接受一个单一参数的函数，并返回接受余下参数而返回结果的新函数的技术  
+2. 柯里化的过程是逐步传参，逐步缩小函数的适用范围，逐步求解的过程  
+
 ```javascript
 function curry(fn, currArgs) {
     return function () {
@@ -902,7 +904,7 @@ function sumOf(a, b, c, d) {
 var sum = curry(sumOf);
 console.log(sum(1,2,3,4))
 // 需要知道函数的参数的个数，个数不够的调用curry，直到满足参数个数需求fn.length，执行fn
-// 
+// 1、延迟计算，参数复用，动态创建函数
 ```  
 
 ### XSS和CSRF和点击劫持和密码安全
@@ -1384,4 +1386,22 @@ const codeMessage = {
 2. 实现：[简单实现](https://github.com/jeremyChenMing/interview/blob/master/javascript/example/js/push_subscribe.js)
     - 首先创建发布者
     - 给发布者添加一个缓存列表，用于存放函数来通知订阅者
-    - 最后就是发布消息，发布者遍历这个缓存列表，依次触发里面存放的订阅者回调函数
+    - 最后就是发布消息，发布者遍历这个缓存列表，依次触发里面存放的订阅者回调函数  
+
+
+
+
+### RESTfull
+1. 基于REST构建的API就是Restfull风格，通过一套统一的接口为PC、H5、IOS、Android提供服务，这种接口不用几桶前端样式，只提供数据。
+2. restfull是典型的基于http协议
+    - 每一个url对应一种资源
+    - 返回的数据多为json
+    - 对资源的操作支持：GET、POST、PUT、DELETE   
+
+### Electron
+1. 使用js，html，css构建跨平台的[桌面应用](https://www.electronjs.org/docs/tutorial/about)， 2014年开源,通过将Chromium和Node.js合并到同一个环境中，并将其打包为mac，window，linux系统下的应用来实现这一目的。
+2. 从开发角度来看，electron application本质是一个node应用程序，于node模块相同，应用的入口为package.json文件。
+3. 有不同的模块来做不同的事情，例如electron-builder(打包和分开解决方案)等 
+
+### Cordova
+1. 使用HTML、CSS、JS进行移动App开发，多平台共用一套代码
