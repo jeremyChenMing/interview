@@ -177,8 +177,91 @@
 
 
 
-## 布局
+### 布局
 1. 双飞翼布局和圣杯布局
     - 都是标准的解决左右固定宽，中间内容自适应布局需求，不同点在于中间的自适应的宽度问题，圣杯布局中间宽度为总屏幕宽，而双飞翼布局多套了一层div，用marigin去解决宽度，所以宽度是总款减去双翼的宽度，大概如下图：![img](img/layout1.png) 
 2. flex来实现圣杯布局是比较方便的
-3. 定位来实现圣杯布局
+3. 定位来实现圣杯布局 
+
+### transition: 过渡动画
+1. 包含四个属性值
+    - transition-property: 属性
+    - transition-duration: 时间
+    - transition-timing-function: 速度曲线 linear/ease/ease-in/ease-out/ease-in-out/cubic-bezier(n,n,n,n)「cubic-bezier函数」
+    - transition-delay: 延迟
+    ```js
+    transition: width .2s ease-in ;
+        <!-- 钩子函数transitionend, 标示动画结束时运行 -->
+        var div = document.getElementById('div')
+        document.addEventListener('transitionend', function () {
+            console.log('123')
+        })
+    ```
+### animation / keyframes
+1. 包含属性
+    - animation-name: 动画名称，对应的@keyframes
+    - animation-duration: 时间
+    - animation-time-function: 速度曲线 linear/ease/ease-in/ease-out/ease-in-out/cubic-bezier(n,n,n,n)「cubic-bezier函数」
+    - animation-delay: 延迟
+    - animation-iteration-count: 动画播放次数 n/infinite 对应的次数和无限次， 默认1次
+    - animation-direction: 对应动画是否轮流反向播放 normal/alternate 正常播放/轮流反向播放
+    - animation-fill-mode: 属性规定动画在播放之前或者之后，其动画效果是否可见 none/forwards/backwards/both 不改变默认/当动画完成保持最后一个属性值/在 animation-delay 所指定的一段时间内，在动画显示之前，应用开始属性值（在第一个关键帧中定义/向前和向后填充模式都被应用
+    ```js
+        // 切记不可以写0，一定要加单位
+        animation:animate 5s ease infinite 3s alternate; 
+        @keyframes animate {
+            0% {
+                width: 100px;
+            }
+
+            50% {
+                width: 300px;
+            }
+
+            100% {
+                width: 150px;
+            }
+        }
+        @keyframes mymove {
+            from {
+                left: 0px;
+            }
+
+            to {
+                left: 200px;
+            }
+        }
+
+        <!-- 动画结束时跳用 -->
+        var div = document.getElementById('div')
+        document.addEventListener('animationend', function () {
+            console.log('123')
+        })
+    ```
+    - animation-fill-mode
+    ```js
+        .box {
+            width: 100px;
+            height: 100px;
+            background-color: cyan;
+            transform: translateY(0);
+        }
+
+        .box.on{
+            animation: move 1s 2s;
+            animation-fill-mode: both;
+        }
+
+        @keyframes move {
+            from {
+                transform: translateY(-50px)
+            }
+
+            to {
+                transform: translateY(50px)
+            }
+        }
+        // forwards 标示动画会停留在结束的那一刻
+        // backwards 表示在有delay时才起作用，当初始状态-delay结束之间，动画会停留在第一帧，也就是上面的-50px，初始状态就是指没有transform属性时的状态（0px）
+        // both就是上面两个的和
+    ```

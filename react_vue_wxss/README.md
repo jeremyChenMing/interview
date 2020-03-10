@@ -234,7 +234,32 @@ componentWillUnmount
 + HOC俗称高阶组件：就是一个函数，接收一个组件作为参数，并返回一个新的组件
 > 作用就是提高组件的复用性，将不同组件需要公用的方法抽取出来，达到共用的效果
 > 常见的HOC有redux中的connect()(wrapperComponent), antd中Form.create()等
+> render props指的是让 React 组件的 props 支持函数这种模式。因为作为 props 传入的函数往往被用来渲染一部分界面。其实就是以props.后缀开头来执行的逻辑渲染关系，就可以称之为render props
+```javascript
+const Auth = (props) => {
+  const userName = getUserName();
 
+  if (userName) {
+    const allProps = {userName, ...props};
+    return (
+      <React.Fragment>
+        {props.login(allProps)}
+      </React.Fragment>
+    );
+  } else {
+    <React.Fragment>
+      {props.nologin(props)}
+    </React.Fragment>
+  }
+};
+
+// 调用处
+<Auth
+    login={({userName}) => <h1>Hello {userName}</h1>}
+    nologin={() => <h1>Please login</h1>}
+/>
+// 所以高阶组件和render props都是重用组件逻辑的
+```
 
 ### React的生命周期mount(挂载)和update(更新)描述下
 
