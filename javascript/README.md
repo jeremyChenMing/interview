@@ -415,6 +415,7 @@ addEventListener(type, listener, {
 
 
 ### 什么是闭包，作用域链？  
+1. 闭包属于一种特殊的作用域，称为 静态作用域。它的定义可以理解为: 父函数被销毁 的情况下，返回出的子函数的[[scope]]中仍然保留着父级的单变量对象和作用域链，因此可以继续访问到父级的变量对象，这样的函数称为闭包。
 >闭包是指有权访问另一个函数作用域中的变量的函数,创建闭包的最常见的方式就是在一个函数内创建另一个函数,通过另一个函数访问这个函数的局部变量。  
 > 组成部分包含两部分：1）上下文环境A，2）在A中创建函数B 。我们调用B的时候能够访问到A中的变量，这就形成了闭包  
 
@@ -422,6 +423,10 @@ addEventListener(type, listener, {
 > 优点：缓存变量，使变量局部化  
 > 作用域：就是函数和变量的可访问范围，分为全局作用域、局部作用域、块级作用域  
 > 作用域链：其实就是在作用域中向上的访问形成的一种链式结构  
+- 闭包产生的问题：多个子函数的[[scope]]都是同时指向父级，是完全共享的，因此当父级的VO被修改，所有的子函数都会受到影响
+    - 解决：变量通过函数参数的形式传进入，避免使用[[scope]]向上查找；使用setTimeout包裹，通过第三个参数传入；使用块级作用域，让变量称为自己上下文的属性，避免共享；
+```js
+```
 
 <br />
 
@@ -763,13 +768,61 @@ same-site | 规定浏览器不能在跨域中携带cookie，减少CRSF攻击 |
 
 
 ![stroge](img/stroge.jpg)  
-> 强制缓存优先协商缓存，若Expires/Cache-control生效则直接使用缓存，若不生效则进行协商缓存Last-Modified/If-Modified-Since和Etag/If-None
+> 强制缓存优先协商缓存，若Expires/Cache-control生效则直接使用缓存，若不生效则进行协商缓存Last-Modified/If-Modified-Since和Etag/If-None-Match
 ![progress](img/stroge_progress.jpg)
 
 ### websocket
-由于http存在的弊端（消息只能由客户端推送到服务器端，而服务器端不能主动推送到客户端），导致如果服务器如果由连续的变化，这时只能使用轮询，而轮询效率过低，于是就有了websocket。  
-特点：支持双向通信，无跨域问题  
-> websocket是基于http协议
+1. 是html5中的协议，由于http存在的弊端（消息只能由客户端推送到服务器端，而服务器端不能主动推送到客户端），导致如果服务器如果由连续的变化，这时只能使用轮询，而轮询效率过低，于是就有了websocket，与http有交集的地方。  
+    - http1.1中虽然有的keep-alive，把多个请求合并为一个，但是websocket其实是一个新协议，跟http没有关系，只是为了兼容浏览器，所以在握手阶段使用了http
+    - 特点：
+        * 支持双向通信，无跨域问题
+        * 可以发送文本、二进制
+        * 没有同源的限制，客户端可以与任意服务器通信
+        * 数据格式比较轻量，性能开销小，通信高效
+> 实现：在握手阶段与http相同，两个重要属性为upgrade，connection
+```js
+GET /chat HTTP/1.1
+Host: server.example.com
+Upgrade: websocket
+Connection: Upgrade
+Sec-WebSocket-Key: x3JJHMbDL1EzLkh9GBhXDw==
+Sec-WebSocket-Protocol: chat, superchat
+Sec-WebSocket-Version: 13
+Origin: http://example.com
+// 告诉服务器发送的是websocket
+
+
+// 使用
+function WebSocketTest() {
+    if ("WebSocket" in window) {
+        console.log("您的浏览器支持 WebSocket!");
+
+        // 打开一个 web socket
+        var ws = new WebSocket("ws://localhost:9998/echo");
+        ws.onopen = function () {
+            // Web Socket 已连接上，使用 send() 方法发送数据
+            ws.send("发送数据");
+            console.log("数据发送中...");
+        };
+
+        ws.onmessage = function (evt) {
+            var received_msg = evt.data;
+            console.log("数据已接收...");
+        };
+
+        ws.onclose = function () {
+            // 关闭 websocket
+            console.log("连接已关闭...");
+        };
+    } else {
+        // 浏览器不支持 WebSocket
+        console.log("您的浏览器不支持 WebSocket!");
+    }
+}
+WebSocketTest();
+
+```
+
 
 ### web worker
 运行与后台的js代码，不会影响页面的性能
@@ -1313,6 +1366,9 @@ const codeMessage = {
     - 特点：1）函数是一等公民（即他可以像其他数据类型一样，可以push到数组里，作为函数参数，或者赋值给变量等），2）纯函数
 
 
+5. 区别
+    - 函数式编程把数据和操作分开，而对象是把数据和操作封装，然后在进行调用。
+    - 函数式编程避免了对数据的改变和状态的改变
 ### 深拷贝和浅拷贝方法
 1. 浅拷贝
     - Object.assign()
@@ -1393,7 +1449,7 @@ const codeMessage = {
 
 
 ### 发布订阅者模式的理解以及实现emiter的方式  
-1. 有名观察者模式，它定义了对象一种一对多的关系，让多个观察者对象同时监听某一个主题对象，当一个对象发生改变，所有依赖的对象都将得到通知。
+1. 又名观察者模式，它定义了对象一种一对多的关系，让多个观察者对象同时监听某一个主题对象，当一个对象发生改变，所有依赖的对象都将得到通知。
 
 
 2. 实现：[简单实现](https://github.com/jeremyChenMing/interview/blob/master/javascript/example/js/push_subscribe.js)
@@ -1405,7 +1461,7 @@ const codeMessage = {
 
 
 ### RESTfull
-1. 基于REST构建的API就是Restfull风格，通过一套统一的接口为PC、H5、IOS、Android提供服务，这种接口不用几桶前端样式，只提供数据。
+1. 基于REST构建的API就是Restfull风格，通过一套统一的接口为PC、H5、IOS、Android提供服务，这种接口不用提供前端样式，只提供数据。
 2. restfull是典型的基于http协议
     - 每一个url对应一种资源
     - 返回的数据多为json
@@ -1418,3 +1474,32 @@ const codeMessage = {
 
 ### Cordova
 1. 使用HTML、CSS、JS进行移动App开发，多平台共用一套代码
+
+
+
+
+### callee和caller
+1. callee是arguments的属性，指向当前引用的函数
+```js
+function fac(num){
+    if(num <= 1){ //0的阶乘也是1
+        return 1;
+    }
+    else{
+        return num*arguments.callee(num-1);
+    }
+}
+// 代表fac，类似递归，主要是为了防止fac这个名字被更改，防止报错
+```
+2. caller是函数的属性，指向调用该函数的函数对象
+```js
+function outer(){
+    inner();
+}
+function inner(){
+    console.log(inner.caller);
+}
+outer();
+// function outer(){inner()}
+
+```

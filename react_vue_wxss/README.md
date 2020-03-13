@@ -88,9 +88,40 @@ let agent = new Proxy(star, {
 - 而使用 proxy，就必须修改代理对象，即 Proxy 的实例才可以触发拦截
 - 设计模式而言，proxy属于**代理模式**
 
-<br />
-
-
+### vue生命周期
+1. 如图 ![生命周期](img/lifecycle.png)
+2. watch 和computed
+    - watch用在数据变化时执行异步或开销较大的操作
+    - computed用于属性依赖的计算
+> computed在计算属性的时候可以提供一个方法或者是属性的getter和setter
+```js
+data: {
+    setValue: 'name'
+},
+computed: {
+    evenNumbers: function () {
+        return this.numbers.filter(function (number) {
+            return number % 2 === 0
+        })
+    },
+    fullname: {
+        get: function() { // getter
+            return this.setValue
+        },
+        set: function(val) { // setter
+            this.setValue = this.setValue + val
+        }
+    }
+}
+```
+3. 小注意事项
+    - 切换表单组件的时候，无状态的input框会保留value值，通过写入key属性完成
+    - 更改属性可以动态响应到dom上，可以用var app = new Vue();app.set(obj, 属性名, value)
+    ```js
+    vm.$set(vm.userProfile, 'age', 27)
+    ```
+    - $emit触发当前实例上的事件(自定义事件)```this.$emit('delete', this.id)```,就可以子组件调用定义在父组件上定义的方法了
+    
 React
 ====
 ### React原理
@@ -108,14 +139,16 @@ react采用单项数据流动， 作为一个mvc中的V（视图层），内部�
 - diff算法经过两个阶段：
     + diff: 计算虚拟DOM树转换为真实DOM树
     + patch: 将差异更新到真实的DOM节点
-> diff算法: react diff算法的差异查找的实质是对两个js对象的差异查找，基于三个策略:  
-> 1. Web UI中的DOM节点跨层级的移动操作特别少，可以忽略不计（tree diff)
-> 2. 拥有同类的两个组件将会生成相似的树形结构，不同类型的两个组件将会生成不同类型的树形结构（component diff)
-> 3. 对于同一层级的一组节点，可以通过唯一的id进行区分（element diff）
 
-> 原则上1来讲，对树的每一层遍历，如果组件不存在了则直接销毁
-> 原则上2来讲，同一类的组件继续比较，也可以手动写shouldComponentUpdate，不同类型的组件直接替换
-> 原则上3来讲，比较复杂，例如key的比较
+### react的diff算法
+1. 就是对比两个virtural Dom（fiber子节点树），首先进行的是统一比较，不同类的直接替换，根据keys判断列表dom是删除还是添加，从而减少对比的复杂度。
+2. 策略：减少了diff算法的复杂度
+    - tree diff
+    > webui中dom节点的跨层级移动操作少的可以忽略不计，react只会比较同级别的dom，当出现跨层级也不会进行跨层级比较，依然比较同级的dom，没有则删除，有则添加
+    - component diff
+    > 1)如果是同一类型组件，按照原策略进行虚拟dom比较；2）不同类组件则直接进行替换；3）如果是同一个类型的组件，有可能经过一轮virtural dom比较后，并没有改变，如果我们可以提前知道这一点就可以省去不必要的diff时间，因此，react允许用户通过shouldComponentUpdate生命周期来判断是否需要进行diff分析；
+    - element diff  
+    > 当节点属于同一层级时，diff提供三种操作，分别是插入、移动、删除（即keys的重要性）
 
 
 ### JSX是如何解析的
@@ -178,15 +211,6 @@ componentWillUnmount
 // getSnapshotBeforeUpdate 代替了 componentWillUpdate, 会在update后，dom更新前调用
 ```
 
-### react的diff算法
-1. 就是对比两个virtural Dom（fiber子节点树），首先进行的是统一比较，不同类的直接替换，根据keys判断列表dom是删除还是添加，从而减少对比的复杂度。
-2. 策略：减少了diff算法的复杂度
-    - tree diff
-    > webui中dom节点的跨层级移动操作少的可以忽略不计，react只会比较同级别的dom，当出现跨层级也不会进行跨层级比较，依然比较同级的dom，没有则删除，有则添加
-    - component diff
-    > 1)如果是同一类型组件，按照原策略进行虚拟dom比较；2）不同类组件则直接进行替换；3）如果是同一个类型的组件，有可能经过一轮virtural dom比较后，并没有改变，如果我们可以提前知道这一点就可以省去不必要的diff时间，因此，react允许用户通过shouldComponentUpdate生命周期来判断是否需要进行diff分析；
-    - element diff  
-    > 当节点属于同一层级时，diff提供三种操作，分别是插入、移动、删除（即keys的重要性）
 
 
 ### react通信方式有哪些  
@@ -230,11 +254,14 @@ componentWillUnmount
         )
     }
     ```
-### HOC是什么  
-+ HOC俗称高阶组件：就是一个函数，接收一个组件作为参数，并返回一个新的组件
-> 作用就是提高组件的复用性，将不同组件需要公用的方法抽取出来，达到共用的效果
-> 常见的HOC有redux中的connect()(wrapperComponent), antd中Form.create()等
-> render props指的是让 React 组件的 props 支持函数这种模式。因为作为 props 传入的函数往往被用来渲染一部分界面。其实就是以props.后缀开头来执行的逻辑渲染关系，就可以称之为render props
+### HOC是什么及render props以及hook  
+1. HOC俗称高阶组件：就是一个函数，接收一个组件作为参数，并返回一个新的组件
+    - 作用就是提高组件的复用性，将不同组件需要公用的方法抽取出来，达到共享的效果，例如操作props, state, 通过refs访问组件实例,用其他元素包裹；  
+    - HOC类似函数式编程的思想，对于被包裹组件是不会感知到高阶组件的存在，而高阶组件返回的组件会在原来的组件之上具有功能增加的效果，与vue的Mixin这种混合模式，会给组件增加新的方法和属性，组件本身不仅可以感知，甚至需要做相关的处理（命名冲突，状态维护），一旦混入的模块变多，整个组件就变的难以维护，也就是为什么如此多的react库都采用高阶组件的方式进行开发；
+    - 常见的HOC有redux中的connect()(wrapperComponent), antd中Form.create()等  
+
+
+2. render props指的是让 React 组件的 props 支持函数这种模式。因为作为 props 传入的函数往往被用来渲染一部分界面。其实就是以props.后缀开头来执行的逻辑渲染关系，就可以称之为render props
 ```javascript
 const Auth = (props) => {
   const userName = getUserName();
@@ -259,6 +286,7 @@ const Auth = (props) => {
     nologin={() => <h1>Please login</h1>}
 />
 // 所以高阶组件和render props都是重用组件逻辑的
+// 场景：平级组件单向依赖就可以使用这个技术，例如A组件内部的渲染需要B组件内部的状态，如果相互依赖，直接抽到父级组件去做了
 ```
 
 ### React的生命周期mount(挂载)和update(更新)描述下
@@ -324,6 +352,8 @@ class Seet extends Component {
 // 2. 放开setTimeout这段代码时，由于不在react自身的事件处理中，所以isBatchingUpdates为false，可以同步更新this.state，所以第三次log为2，第四次的为3
 ```
 
+### react事件中为什么要绑定this
+1. 在jsx语法中onClick只是一个中间变量，因为react有自己的一套事件机制，将函数赋值给onClick这个中间变量，在解析和语法转换时里面的this就丢失了，不在指向实例对象，所以写事件的时候需要onClick={this.handle.bind(this)},但是🈶️出于性能影响，在constructor里面去绑定this,后面就出现了箭头函数
 
 
 ### ssr(sever slide rendering)  
