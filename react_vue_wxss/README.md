@@ -114,14 +114,194 @@ computed: {
     }
 }
 ```
-3. 小注意事项
+### 小注意事项
     - 切换表单组件的时候，无状态的input框会保留value值，通过写入key属性完成
     - 更改属性可以动态响应到dom上，可以用var app = new Vue();app.set(obj, 属性名, value)
     ```js
     vm.$set(vm.userProfile, 'age', 27)
     ```
     - $emit触发当前实例上的事件(自定义事件)```this.$emit('delete', this.id)```,就可以子组件调用定义在父组件上定义的方法了
+    - $nextTick使用，有些类似，setState中的第二个参数回调函数的作用
+    ```javascript
+    export default {
+        data() {
+            return {
+            message: "没有更新"
+            };
+        },
+        methods: {
+            update() {
+            this.message = "123";
+            console.log(this.$refs.div.textContent, '@@@'); // 未更新
+            this.$nextTick(function() {
+                console.log(this.$refs.div.textContent, '***'); // 123
+            });
+            }
+        }
+    };
+    ```
+    - computed对应的属性为一个方法，不然访问不到当前实例
     
+### vue.extend 和mixins（混入，可以混入多个）/extends（继承组件，只能有一个）区别
+1. mixin是混入，一旦混入它将影响每一个之后创建的vue实例， 参数是一个对象，例如：
+```js
+Vue.mixin({
+    created: function () {
+        var myOption = this.$options.myOption
+        if (myOption) {
+        console.log(myOption)
+        }
+    }
+})
+
+new Vue({
+    myOption: 'hello!'
+})
+// => "hello!"
+// 实质上 是对实例的方法进行扩展
+// 场景：需要注入全局的method、filters、hook
+```
+2. extend,使用vue基础构造器，创建一个子类，参数是包含一个组件的对象
+```js
+<div id="mount-point"></div>
+// 创建构造器
+var Profile = Vue.extend({
+ template: '<p>{{firstName}} {{lastName}} aka {{alias}}</p>',
+ data: function () {
+  return {
+   firstName: 'Walter',
+   lastName: 'White',
+   alias: 'Heisenberg'
+  }
+ }
+})
+// 创建 Profile 实例，并挂载到一个元素上。
+new Profile().$mount('#mount-point') // div会被渲染称为p
+
+// 场景：当我们不需要全局去混入一些配置，比如，我们想要获得一个component
+```
+3. 区别：
+    - mixin是对Vue类的options进行混入。所有Vue的实例对象都会具备混入进来的配置行为
+    - extend是产生一个继承自Vue类的子类，只会影响这个子类的实例对象，不会对Vue类本身以及Vue类的实例对象产生影响
+
+### vuex
+1. 它是一个状态几种管理器，并以相应的规则保证状态以一种可预测的方式发生变化，主要包括state(驱动应用的数据源),action(响应view上的用户输入导致的状态变化),view（以声明的方式将state映射到视图）
+2. getters相当于vue中的computed计算属性, 获取方法如下
+```js
+import { mapGetters, mapState } from 'vuex'
+computed: { // state 用于存储数据，调用方法如下
+    ...mapGetters(['level']),
+    ...mapState(['userInfo', 'classes']),
+},
+
+//触发action
+import store from '../store'
+store.dispatch('login', { // action定义的名称
+    name: this.name,
+    password: this.password,
+}).then( () => {
+    this.loading =false;
+    this.$router.push('/home')
+})
+// 调用mutation
+store.commit('increment', v) // 定义的mutation的名称 v传参数
+// 在actions中调用如下
+login({commit}, e){
+    commit('changeUser', e) // 调用mutations
+    return new Promise( (resolve) => {
+        setTimeout(function() {
+            resolve({code: 200, msg: '登录成功'})
+        },400)
+    })
+}
+```
+2. 
+
+
+### vue-router
+1. 注意点
+```js
+{
+    path: '/home',
+    name: 'home', 
+    component: () => import('./pages/home.vue'),
+    children: [
+        {
+            path: 'cell',
+            component: () => import('./pages/cell.vue')
+        },
+    ]
+}
+// 嵌套路由时，如果children里面的path不要加 ‘/’ 不然会以根路由对待，不加‘/’这个的话 那么上述home/cell 就可以正确匹配了，稍微有点区别与react路由
+
+// name是可以用在方法或者router-link标签使用， 例如
+router.push({name: 'home', params: {userId: 123}})
+<router-link :to="{ name: 'user', params: { userId: 123 }}">User</router-link>
+
+// 获取路由的参数this.$route.params
+// 路由跳转 this.$router.push
+
+// 路由的钩子函数
+router.beforeEach((to, from, next) => {
+// 要确保调用next()
+})
+router.afterEach((route) => {
+
+})
+```
+
+
+### 服务端渲染及框架nuxt.js
+1. vue服务端渲染
+```js
+// 借助插件来完成的vue-server-renderer
+// 第 1 步：创建一个 Vue 实例
+const Vue = require('vue')
+const app = new Vue({
+  template: `<div>Hello World</div>`
+})
+
+// 第 2 步：创建一个 renderer
+const renderer = require('vue-server-renderer').createRenderer()
+
+// 第 3 步：将 Vue 实例渲染为 HTML
+renderer.renderToString(app, (err, html) => {
+  if (err) throw err
+  console.log(html)
+  // => <div data-server-rendered="true">Hello World</div>
+})
+
+// 在 2.5.0+，如果没有传入回调函数，则会返回 Promise：
+renderer.renderToString(app).then(html => {
+  console.log(html)
+}).catch(err => {
+  console.error(err)
+})
+
+
+```
+2. nuxt.js
+
+
+### vue项目优化
+1. 循环加key
+2. v-if(不需要频繁切换的) v-show
+3. computed 和watch区分场景使用
+4. 绑定时间进行销毁
+5. 图片懒加载，路由懒加载
+6. 按需要引入 babel-plugin-component 
+7. v-once只渲染一次，后面的渲染及更新可以跳过这个dom，达到优化
+
+
+### vue和react虚拟dom有什么区别吗？diff区别
+1. 虚拟dom都是一样的，一种真实dom的js对象化，两者对于dom的更新策略不太一样， react采用自顶向下的全量diff，vue是局部订阅的模式
+2. react 函数式组件思想 当你 setstate 就会遍历 diff 当前组件所有的子节点子组件, 这种方式开销是很大的, 所以 react 16 采用了 fiber 链表代替之前的树，可以中断的，分片的在浏览器空闲时候执行，vue 组件响应式思想 采用代理监听数据，我在某个组件里修改数据，就会明确知道那个组件产生了变化，只用 diff 这个组件就可以了
+
+
+
+
+
+
 React
 ====
 ### React原理
@@ -199,7 +379,7 @@ componentWillReceiveProps
 shouldComponentUpdate
 componentWillUpdate
 
-> 为什么会多次执行这个will的生命周期呢？在异步渲染的时候，会调用requestIdelCallback API，在回掉函数中可以获得当前的callback参数（分片任务）还能执行多久，如果时间不够，分片任务会打算，下次就只能空闲时重新执行
+> 为什么会多次执行这个will的生命周期呢？在异步渲染的时候，会调用requestIdelCallback API，在回掉函数中可以获得当前的callback参数（分片任务）还能执行多久，如果时间不够，分片任务会打断，下次就只能空闲时重新执行
 
 2) Commit
 componentDidMount
@@ -444,7 +624,7 @@ class Seet extends Component {
 本质就是监听 URL 的变化，然后匹配路由规则，显示相应的页面，并且无须刷新，分类两种方式hash和history模式；
 
 
-
+### 服务端渲染框架next.js
 
 小程序
 ====
